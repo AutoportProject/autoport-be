@@ -81,10 +81,3 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 }
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
-    }
-}
