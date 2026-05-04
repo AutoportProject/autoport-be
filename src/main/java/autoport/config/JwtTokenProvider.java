@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 
@@ -46,21 +47,21 @@ public class JwtTokenProvider {
     }
 
     public String getUsernameFromJwtToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
+        Claims claims = Jwts.parser()
+                .verifyWith((SecretKey) key)
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
 
         return claims.getSubject();
     }
 
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
+            Jwts.parser()
+                    .verifyWith((SecretKey) key)
                     .build()
-                    .parseClaimsJws(authToken);
+                    .parseSignedClaims(authToken);
             return true;
         } catch (MalformedJwtException ex) {
             log.error("Invalid JWT token");
