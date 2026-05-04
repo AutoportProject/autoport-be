@@ -13,22 +13,24 @@ import autoport.common.exception.ApiException;
 import autoport.config.JwtTokenProvider;
 import autoport.user.entity.User;
 import autoport.user.repository.UserRepository;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.MailException;
-import org.springframework.mail.MailAuthenticationException;
-import org.springframework.mail.MailSendException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Random;
 
 @Slf4j
@@ -41,10 +43,17 @@ public class AuthService {
     private final EmailVerificationRepository emailVerificationRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
-    private final JavaMailSender javaMailSender;
+    private final ObjectMapper objectMapper;
 
-    @Value("${spring.mail.from}")
-    private String mailFrom;
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
+
+    @Value("${resend.api-key:}")
+    private String resendApiKey;
+
+    @Value("${resend.from:Autoport <onboarding@resend.dev>}")
+    private String resendFrom;
 
     public GithubLoginResponse githubLogin(GithubLoginRequest request) {
         String code = request.getCode();
@@ -185,14 +194,14 @@ public class AuthService {
     }
 
     private void sendVerificationEmail(String email, String verificationCode) {
+        if (resendApiKey == null || resendApiKey.isBlank()) {
+            throw new ApiException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "MAIL_002",
+                    "Resend API key is not configured");
+        }
+
         try {
-            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            helper.setFrom(mailFrom);
-            helper.setTo(email);
-            helper.setSubject("Autoport 이메일 인증 코드");
-
             String htmlContent = String.format(
                     "<html>" +
                     "<body style='font-family: Arial, sans-serif;'>" +
@@ -207,27 +216,47 @@ public class AuthService {
                     verificationCode
             );
 
-            helper.setText(htmlContent, true);
-            javaMailSender.send(mimeMessage);
+            Map<String, Object> payload = Map.of(
+                    "from", resendFrom,
+                    "to", email,
+                    "subject", "Autoport 이메일 인증 코드",
+                    "html", htmlContent);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .timeout(Duration.ofSeconds(20))
+                    .header("Authorization", "Bearer " + resendApiKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(payload)))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.error(
+                        "Resend failed to send verification email to: {}. status={}, body={}",
+                        email,
+                        response.statusCode(),
+                        response.body());
+                throw new ApiException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "MAIL_003",
+                        "Resend failed to send verification email");
+            }
+
             log.info("Verification email sent to: {}", email);
-        } catch (MessagingException e) {
-            log.error("Failed to send verification email to: {}", email, e);
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email");
-        } catch (MailAuthenticationException e) {
-            log.error("Mail authentication failed. Check MAIL_USERNAME and MAIL_PASSWORD.", e);
+        } catch (IOException e) {
+            log.error("Failed to call Resend API for verification email to: {}", email, e);
             throw new ApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "MAIL_002",
-                    "Mail authentication failed. Check MAIL_USERNAME and MAIL_PASSWORD");
-        } catch (MailSendException e) {
-            log.error("Mail server failed to send verification email to: {}", email, e);
+                    "MAIL_001",
+                    "Failed to call Resend API");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new ApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "MAIL_003",
-                    "Mail server failed to send verification email");
-        } catch (MailException e) {
-            log.error("Mail server rejected verification email to: {}", email, e);
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email");
+                    "MAIL_001",
+                    "Failed to call Resend API");
         }
     }
 }
