@@ -1,0 +1,622 @@
+### 1. GitHub Login - 기존 유저
+POST http://localhost:8080/api/auth/github
+Content-Type: application/json
+
+{
+  "code": "existing-user-code"
+}
+
+### 2. GitHub Login - 신규 유저
+POST http://localhost:8080/api/auth/github
+Content-Type: application/json
+
+{
+  "code": "new-user-code"
+}
+
+### 3. GitHub Login - 잘못된 code
+POST http://localhost:8080/api/auth/github
+Content-Type: application/json
+
+{
+  "code": "wrong-code"
+}
+
+### 4. GitHub OAuth Signup - 성공
+POST http://localhost:8080/api/auth/signup/github
+Content-Type: application/json
+
+{
+  "tempUserId": 1,
+  "name": "홍길동",
+  "bio": "백엔드 개발자"
+}
+
+### 5. GitHub OAuth Signup - 잘못된 tempUserId
+POST http://localhost:8080/api/auth/signup/github
+Content-Type: application/json
+
+{
+  "tempUserId": 123,
+  "name": "홍길동",
+  "bio": "백엔드 개발자"
+}
+
+### 6. GitHub OAuth Signup - 이미 가입된 사용자
+POST http://localhost:8080/api/auth/signup/github
+Content-Type: application/json
+
+{
+  "tempUserId": 999,
+  "name": "홍길동",
+  "bio": "백엔드 개발자"
+}
+
+### 7. Local Login - 성공
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@email.com",
+  "password": "1234"
+}
+
+### 8. Local Login - 존재하지 않는 사용자
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "none@email.com",
+  "password": "1234"
+}
+
+### 9. Local Login - 비밀번호 불일치
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@email.com",
+  "password": "0000"
+}
+
+### 10. 이메일 인증 코드 발송 - 성공
+POST http://localhost:8080/api/auth/email/send
+Content-Type: application/json
+
+{
+  "email": "new@email.com"
+}
+
+### 11. 이메일 인증 코드 발송 - 중복 이메일
+POST http://localhost:8080/api/auth/email/send
+Content-Type: application/json
+
+{
+  "email": "test@email.com"
+}
+
+### 12. Local Signup - 성공
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "new@email.com",
+  "password": "1234",
+  "name": "홍길동",
+  "bio": "백엔드 개발자",
+  "code": "123456"
+}
+
+### 13. Local Signup - 이메일 중복
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "test@email.com",
+  "password": "1234",
+  "name": "홍길동",
+  "bio": "백엔드 개발자",
+  "code": "123456"
+}
+
+### 14. Local Signup - code 누락
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "new@email.com",
+  "password": "1234",
+  "name": "홍길동",
+  "bio": "백엔드 개발자"
+}
+
+### 15. 내 정보 조회 - 일반 사용자 성공
+GET http://localhost:8080/api/users/me
+Authorization: Bearer mock-user-token
+
+### 16. 내 정보 조회 - 관리자 성공
+GET http://localhost:8080/api/users/me
+Authorization: Bearer mock-admin-token
+
+### 17. 내 정보 조회 - 인증 실패
+GET http://localhost:8080/api/users/me
+Authorization: Bearer wrong-token
+
+### 18. 관리자 사용자 목록 조회 - 성공
+GET http://localhost:8080/api/users?page=1&size=10
+Authorization: Bearer mock-admin-token
+
+### 19. 관리자 사용자 목록 조회 - keyword 검색
+GET http://localhost:8080/api/users?page=1&size=10&keyword=홍길동
+Authorization: Bearer mock-admin-token
+
+### 20. 관리자 사용자 목록 조회 - provider 필터
+GET http://localhost:8080/api/users?page=1&size=10&provider=GITHUB
+Authorization: Bearer mock-admin-token
+
+### 21. 관리자 사용자 목록 조회 - 권한 없음
+GET http://localhost:8080/api/users?page=1&size=10
+Authorization: Bearer mock-user-token
+
+### 22. 관리자 사용자 목록 조회 - 인증 실패
+GET http://localhost:8080/api/users?page=1&size=10
+Authorization: Bearer wrong-token
+
+### 23. Repo 목록 조회 - 성공
+GET http://localhost:8080/api/github/repos?sort=updated&direction=desc&page=1&perPage=30
+Authorization: Bearer mock-user-token
+
+### 24. Repo 목록 조회 - GitHub 토큰 없음/만료
+GET http://localhost:8080/api/github/repos?sort=updated&direction=desc&page=1&perPage=30
+Authorization: Bearer mock-user-no-github-token
+
+### 25. Repo 목록 조회 - 인증 실패
+GET http://localhost:8080/api/github/repos?sort=updated&direction=desc&page=1&perPage=30
+Authorization: Bearer wrong-token
+
+### 26. Repo 분석 - 성공
+POST http://localhost:8080/api/github/analyze
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "repoId": 123456,
+  "repoName": "autoport",
+  "owner": "username"
+}
+
+### 27. Repo 분석 - 잘못된 요청값
+POST http://localhost:8080/api/github/analyze
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "repoId": 123456,
+  "owner": "username"
+}
+
+### 28. Repo 분석 - GitHub 토큰 오류
+POST http://localhost:8080/api/github/analyze
+Content-Type: application/json
+Authorization: Bearer mock-user-no-github-token
+
+{
+  "repoId": 123456,
+  "repoName": "autoport",
+  "owner": "username"
+}
+
+### 29. Repo 분석 - 존재하지 않는 repository
+POST http://localhost:8080/api/github/analyze
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "repoId": 999999,
+  "repoName": "not-found-repo",
+  "owner": "username"
+}
+
+### 30. Repo 분석 - 분석 실패(500)
+POST http://localhost:8080/api/github/analyze
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "repoId": 555555,
+  "repoName": "fail-analyze",
+  "owner": "username"
+}
+
+### 31. 포트폴리오 생성 - 성공
+POST http://localhost:8080/api/portfolio/generate
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "analysisResult": {
+    "projectName": "autoport",
+    "summary": "GitHub repository 기반 포트폴리오 생성 서비스",
+    "stacks": ["Java", "Spring Boot", "MySQL"],
+    "highlights": [
+      "GitHub OAuth 로그인 구현",
+      "레포 분석 기반 포트폴리오 생성"
+    ]
+  },
+  "templateId": 1,
+  "userName": "홍길동",
+  "bio": "백엔드 개발자",
+  "tone": "professional"
+}
+
+### 32. 포트폴리오 생성 - 인증 실패
+POST http://localhost:8080/api/portfolio/generate
+Content-Type: application/json
+Authorization: Bearer wrong-token
+
+{
+  "analysisResult": {
+    "projectName": "autoport",
+    "summary": "GitHub repository 기반 포트폴리오 생성 서비스",
+    "stacks": ["Java", "Spring Boot", "MySQL"],
+    "highlights": [
+      "GitHub OAuth 로그인 구현",
+      "레포 분석 기반 포트폴리오 생성"
+    ]
+  },
+  "templateId": 1,
+  "userName": "홍길동",
+  "bio": "백엔드 개발자",
+  "tone": "professional"
+}
+
+### 33. 포트폴리오 생성 - 잘못된 요청값
+POST http://localhost:8080/api/portfolio/generate
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "analysisResult": {
+    "projectName": "autoport",
+    "stacks": ["Java", "Spring Boot", "MySQL"],
+    "highlights": [
+      "GitHub OAuth 로그인 구현",
+      "레포 분석 기반 포트폴리오 생성"
+    ]
+  },
+  "templateId": 1,
+  "userName": "홍길동",
+  "bio": "백엔드 개발자",
+  "tone": "professional"
+}
+
+### 34. 포트폴리오 생성 - AI 생성 실패(500)
+POST http://localhost:8080/api/portfolio/generate
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "analysisResult": {
+    "projectName": "autoport",
+    "summary": "GitHub repository 기반 포트폴리오 생성 서비스",
+    "stacks": ["Java", "Spring Boot", "MySQL"],
+    "highlights": [
+      "GitHub OAuth 로그인 구현",
+      "레포 분석 기반 포트폴리오 생성"
+    ]
+  },
+  "templateId": 999,
+  "userName": "홍길동",
+  "bio": "백엔드 개발자",
+  "tone": "professional"
+}
+
+### 35. 포트폴리오 저장 - 성공
+POST http://localhost:8080/api/portfolio
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "title": "백엔드 개발자 홍길동",
+  "bio": "안녕하세요, GitHub 기반 프로젝트 경험을 바탕으로 다양한 백엔드 서비스를 개발해온 홍길동입니다.",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스",
+      "techStacks": ["Java", "Spring Boot", "MySQL"],
+      "highlights": [
+        "GitHub OAuth 로그인 구현",
+        "레포 분석 기반 포트폴리오 생성"
+      ],
+      "githubUrl": "https://github.com/user/autoport",
+      "order": 1
+    }
+  ],
+  "isPublic": true,
+  "featuredProjectId": 123456
+}
+
+### 36. 포트폴리오 저장 - 인증 실패
+POST http://localhost:8080/api/portfolio
+Content-Type: application/json
+Authorization: Bearer wrong-token
+
+{
+  "title": "백엔드 개발자 홍길동",
+  "bio": "안녕하세요, GitHub 기반 프로젝트 경험을 바탕으로 다양한 백엔드 서비스를 개발해온 홍길동입니다.",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스",
+      "techStacks": ["Java", "Spring Boot", "MySQL"],
+      "highlights": [
+        "GitHub OAuth 로그인 구현",
+        "레포 분석 기반 포트폴리오 생성"
+      ],
+      "githubUrl": "https://github.com/user/autoport",
+      "order": 1
+    }
+  ],
+  "isPublic": true,
+  "featuredProjectId": 123456
+}
+
+### 37. 포트폴리오 저장 - 잘못된 요청값
+POST http://localhost:8080/api/portfolio
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "title": "백엔드 개발자 홍길동",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스"
+    }
+  ],
+  "isPublic": true
+}
+
+### 38. 포트폴리오 저장 - 저장 실패(500)
+POST http://localhost:8080/api/portfolio
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "title": "fail-save",
+  "bio": "안녕하세요",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스",
+      "techStacks": ["Java"],
+      "highlights": ["OAuth 로그인"],
+      "githubUrl": "https://github.com/user/autoport",
+      "order": 1
+    }
+  ],
+  "isPublic": true
+}
+
+### 39. 포트폴리오 수정 - 성공
+PUT http://localhost:8080/api/portfolio/1
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "title": "백엔드 개발자 홍길동",
+  "bio": "안녕하세요, 백엔드 API 설계와 서버 개발을 중심으로 프로젝트를 수행해온 홍길동입니다.",
+  "templateId": 2,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스",
+      "techStacks": ["Java", "Spring Boot", "MySQL"],
+      "highlights": [
+        "GitHub OAuth 로그인 구현",
+        "Gemini 기반 포트폴리오 생성"
+      ],
+      "githubUrl": "https://github.com/user/autoport",
+      "order": 1
+    }
+  ],
+  "isPublic": true,
+  "featuredProjectId": 123456
+}
+
+### 40. 포트폴리오 수정 - 인증 실패
+PUT http://localhost:8080/api/portfolio/1
+Content-Type: application/json
+Authorization: Bearer wrong-token
+
+{
+  "title": "백엔드 개발자 홍길동",
+  "bio": "안녕하세요",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스"
+    }
+  ]
+}
+
+### 41. 포트폴리오 수정 - 권한 없음
+PUT http://localhost:8080/api/portfolio/403
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "title": "백엔드 개발자 홍길동",
+  "bio": "안녕하세요",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스"
+    }
+  ]
+}
+
+### 42. 포트폴리오 수정 - 존재하지 않음
+PUT http://localhost:8080/api/portfolio/999
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "title": "백엔드 개발자 홍길동",
+  "bio": "안녕하세요",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스"
+    }
+  ]
+}
+
+### 43. 포트폴리오 수정 - 수정 실패(500)
+PUT http://localhost:8080/api/portfolio/1
+Content-Type: application/json
+Authorization: Bearer mock-user-token
+
+{
+  "title": "fail-update",
+  "bio": "안녕하세요",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스"
+    }
+  ]
+}
+
+### 44. 포트폴리오 삭제 - 성공
+DELETE http://localhost:8080/api/portfolio/1
+Authorization: Bearer mock-user-token
+
+### 45. 포트폴리오 삭제 - 인증 실패
+DELETE http://localhost:8080/api/portfolio/1
+Authorization: Bearer wrong-token
+
+### 46. 포트폴리오 삭제 - 권한 없음
+DELETE http://localhost:8080/api/portfolio/403
+Authorization: Bearer mock-user-token
+
+### 47. 포트폴리오 삭제 - 존재하지 않음
+DELETE http://localhost:8080/api/portfolio/999
+Authorization: Bearer mock-user-token
+
+### 48. 포트폴리오 삭제 - 삭제 실패(500)
+DELETE http://localhost:8080/api/portfolio/500
+Authorization: Bearer mock-user-token
+
+### 49. 포트폴리오 목록 조회 - 성공
+GET http://localhost:8080/api/portfolio?page=1&perPage=10&sort=updatedAt&direction=desc
+Authorization: Bearer mock-user-token
+
+### 50. 포트폴리오 목록 조회 - 인증 실패
+GET http://localhost:8080/api/portfolio?page=1&perPage=10&sort=updatedAt&direction=desc
+Authorization: Bearer wrong-token
+
+### 51. 포트폴리오 상세 조회 - 성공
+GET http://localhost:8080/api/portfolio/1
+Authorization: Bearer mock-user-token
+
+### 52. 포트폴리오 상세 조회 - 인증 실패
+GET http://localhost:8080/api/portfolio/1
+Authorization: Bearer wrong-token
+
+### 53. 포트폴리오 상세 조회 - 권한 없음
+GET http://localhost:8080/api/portfolio/403
+Authorization: Bearer mock-user-token
+
+### 54. 포트폴리오 상세 조회 - 존재하지 않음
+GET http://localhost:8080/api/portfolio/999
+Authorization: Bearer mock-user-token
+
+### 55. 포트폴리오 상세 조회 - 조회 실패(500)
+GET http://localhost:8080/api/portfolio/500
+Authorization: Bearer mock-user-token
+
+### DB 연결 테스트
+GET http://localhost:8080/api/db-test
+
+### 1. 이메일 인증 코드 발송
+POST http://localhost:8080/api/auth/email/send
+Content-Type: application/json
+
+{
+  "email": "newuser@email.com"
+}
+
+### 2. Local Signup
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+
+{
+  "email": "newuser@email.com",
+  "password": "1234",
+  "name": "홍길동",
+  "bio": "백엔드 개발자",
+  "code": "123456"
+}
+
+### 3. Local Login
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "newuser@email.com",
+  "password": "1234"
+}
+
+### 4. Portfolio Save
+POST http://localhost:8080/api/portfolio
+Content-Type: application/json
+Authorization: Bearer mock-jwt-token-for-local-user-2
+
+{
+  "title": "백엔드 개발자 홍길동",
+  "bio": "안녕하세요, GitHub 기반 프로젝트 경험을 바탕으로 백엔드 서비스를 개발해온 홍길동입니다.",
+  "templateId": 1,
+  "projects": [
+    {
+      "repoId": 123456,
+      "name": "autoport",
+      "description": "GitHub repository 기반 포트폴리오 자동 생성 서비스",
+      "techStacks": ["Java", "Spring Boot", "MySQL"],
+      "highlights": [
+        "GitHub OAuth 로그인 구현",
+        "레포 분석 기반 포트폴리오 생성"
+      ],
+      "githubUrl": "https://github.com/user/autoport",
+      "order": 1
+    }
+  ],
+  "isPublic": true,
+  "featuredProjectId": null
+}
+
+### 5. Portfolio List
+GET http://localhost:8080/api/portfolio?page=1&perPage=10&sort=updatedAt&direction=desc
+Authorization: Bearer mock-jwt-token-for-local-user-1
+
+### 6. Portfolio Detail
+GET http://localhost:8080/api/portfolio/1
+Authorization: Bearer mock-jwt-token-for-local-user-1
+
