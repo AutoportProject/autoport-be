@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
+import org.springframework.mail.MailAuthenticationException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -211,6 +213,18 @@ public class AuthService {
         } catch (MessagingException e) {
             log.error("Failed to send verification email to: {}", email, e);
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email");
+        } catch (MailAuthenticationException e) {
+            log.error("Mail authentication failed. Check MAIL_USERNAME and MAIL_PASSWORD.", e);
+            throw new ApiException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "MAIL_002",
+                    "Mail authentication failed. Check MAIL_USERNAME and MAIL_PASSWORD");
+        } catch (MailSendException e) {
+            log.error("Mail server failed to send verification email to: {}", email, e);
+            throw new ApiException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "MAIL_003",
+                    "Mail server failed to send verification email");
         } catch (MailException e) {
             log.error("Mail server rejected verification email to: {}", email, e);
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email");
