@@ -13,14 +13,22 @@ import autoport.common.exception.ApiException;
 import autoport.config.JwtTokenProvider;
 import autoport.user.entity.User;
 import autoport.user.repository.UserRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -30,6 +38,10 @@ public class AuthService {
     private final EmailVerificationRepository emailVerificationRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final JavaMailSender javaMailSender;
+
+    @Value("${spring.mail.from}")
+    private String mailFrom;
 
     public GithubLoginResponse githubLogin(GithubLoginRequest request) {
         String code = request.getCode();
@@ -153,7 +165,51 @@ public class AuthService {
 
         emailVerificationRepository.deleteByEmail(email);
 
-        EmailVerification verification = EmailVerification.create(email, "123456");
+        // 랜덤 6자리 인증 코드 생성
+        String verificationCode = generateVerificationCode();
+        
+        EmailVerification verification = EmailVerification.create(email, verificationCode);
         emailVerificationRepository.save(verification);
+
+        // 이메일 발송
+        sendVerificationEmail(email, verificationCode);
+    }
+
+    private String generateVerificationCode() {
+        Random random = new Random();
+        int code = 100000 + random.nextInt(900000);
+        return String.valueOf(code);
+    }
+
+    private void sendVerificationEmail(String email, String verificationCode) {
+        try {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setFrom(mailFrom);
+            helper.setTo(email);
+            helper.setSubject("Autoport 이메일 인증 코드");
+
+            String htmlContent = String.format(
+                    "<html>" +
+                    "<body style='font-family: Arial, sans-serif;'>" +
+                    "<h2>Autoport 이메일 인증</h2>" +
+                    "<p>안녕하세요!</p>" +
+                    "<p>아래의 인증 코드를 입력하여 이메일을 인증해주세요.</p>" +
+                    "<h3 style='background-color: #f0f0f0; padding: 10px; text-align: center; letter-spacing: 2px;'>%s</h3>" +
+                    "<p>이 코드는 24시간 동안 유효합니다.</p>" +
+                    "<p>감사합니다!</p>" +
+                    "</body>" +
+                    "</html>",
+                    verificationCode
+            );
+
+            helper.setText(htmlContent, true);
+            javaMailSender.send(mimeMessage);
+            log.info("Verification email sent to: {}", email);
+        } catch (MessagingException e) {
+            log.error("Failed to send verification email to: {}", email, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email");
+        }
     }
 }
