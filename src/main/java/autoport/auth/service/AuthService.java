@@ -43,8 +43,8 @@ public class AuthService {
     private final EmailVerificationRepository emailVerificationRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
-    private final ObjectMapper objectMapper;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
