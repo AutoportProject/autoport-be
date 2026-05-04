@@ -154,8 +154,16 @@ public class AuthService {
             throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "이미 가입된 사용자입니다.");
         }
 
-        if (userRepository.existsByEmail(tempUser.getEmail())) {
-            throw new ApiException(HttpStatus.CONFLICT, "USER_001", "Email already exists");
+        User existingEmailUser = userRepository.findByEmail(tempUser.getEmail()).orElse(null);
+        if (existingEmailUser != null) {
+            existingEmailUser.connectGithub(
+                    tempUser.getGithubId(),
+                    tempUser.getGithubLogin(),
+                    tempUser.getGithubAccessToken(),
+                    tempUser.getProfileImage());
+
+            tempUserRepository.delete(tempUser);
+            return jwtTokenProvider.generateTokenFromUsername(existingEmailUser.getId().toString());
         }
 
         User user = User.githubUser(

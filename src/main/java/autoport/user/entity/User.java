@@ -87,4 +87,20 @@ public class User {
         user.updatedAt = LocalDateTime.now();
         return user;
     }
+
+    public void connectGithub(
+            String githubId,
+            String githubLogin,
+            String githubAccessToken,
+            String profileImage) {
+        this.githubId = githubId;
+        this.githubLogin = githubLogin;
+        this.githubAccessToken = githubAccessToken;
+
+        if (this.profileImage == null || this.profileImage.isBlank()) {
+            this.profileImage = profileImage;
+        }
+
+        this.updatedAt = LocalDateTime.now();
+    }
 }
