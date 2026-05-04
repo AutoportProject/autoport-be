@@ -183,6 +183,8 @@ public class AuthService {
 
     private void sendVerificationEmail(String email, String verificationCode) {
         try {
+            log.info("이메일 발송 시도: {}에게 인증코드 발송", email);
+
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
@@ -206,10 +208,15 @@ public class AuthService {
 
             helper.setText(htmlContent, true);
             javaMailSender.send(mimeMessage);
-            log.info("Verification email sent to: {}", email);
+
+            log.info("이메일 발송 성공: {}에게 인증코드 발송 완료", email);
+
         } catch (MessagingException e) {
-            log.error("Failed to send verification email to: {}", email, e);
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email");
+            log.error("이메일 발송 실패: {}에게 발송 중 오류 발생 - {}", email, e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("이메일 발송 중 예상치 못한 오류: {} - {}", email, e.getMessage(), e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_002", "Unexpected error while sending email");
         }
     }
 }
