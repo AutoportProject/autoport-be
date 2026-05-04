@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -183,8 +184,6 @@ public class AuthService {
 
     private void sendVerificationEmail(String email, String verificationCode) {
         try {
-            log.info("이메일 발송 시도: {}에게 인증코드 발송", email);
-
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
@@ -208,15 +207,13 @@ public class AuthService {
 
             helper.setText(htmlContent, true);
             javaMailSender.send(mimeMessage);
-
-            log.info("이메일 발송 성공: {}에게 인증코드 발송 완료", email);
-
+            log.info("Verification email sent to: {}", email);
         } catch (MessagingException e) {
-            log.error("이메일 발송 실패: {}에게 발송 중 오류 발생 - {}", email, e.getMessage(), e);
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email: " + e.getMessage());
-        } catch (Exception e) {
-            log.error("이메일 발송 중 예상치 못한 오류: {} - {}", email, e.getMessage(), e);
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_002", "Unexpected error while sending email");
+            log.error("Failed to send verification email to: {}", email, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email");
+        } catch (MailException e) {
+            log.error("Mail server rejected verification email to: {}", email, e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "MAIL_001", "Failed to send verification email");
         }
     }
 }
