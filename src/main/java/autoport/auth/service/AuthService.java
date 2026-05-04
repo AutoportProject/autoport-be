@@ -21,13 +21,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -54,6 +57,15 @@ public class AuthService {
 
     @Value("${resend.from:Autoport <onboarding@resend.dev>}")
     private String resendFrom;
+
+    @Value("${github.client-id:}")
+    private String githubClientId;
+
+    @Value("${github.client-secret:}")
+    private String githubClientSecret;
+
+    @Value("${github.redirect-uri:}")
+    private String githubRedirectUri;
 
     public GithubLoginResponse githubLogin(GithubLoginRequest request) {
         String code = request.getCode();
@@ -92,7 +104,40 @@ public class AuthService {
                     saved.getId());
         }
 
-        throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "잘못된 GitHub code입니다.");
+        String githubAccessToken = exchangeGithubCodeForAccessToken(code, request.getRedirectUri());
+        JsonNode githubUser = fetchGithubUser(githubAccessToken);
+
+        String githubId = githubUser.path("id").asText();
+        String githubLogin = githubUser.path("login").asText(null);
+        String githubEmail = githubUser.path("email").asText(null);
+        String profileImage = githubUser.path("avatar_url").asText(null);
+        String name = githubUser.path("name").asText(null);
+        String bio = githubUser.path("bio").asText(null);
+
+        if (githubEmail == null || githubEmail.isBlank()) {
+            githubEmail = fetchPrimaryGithubEmail(githubAccessToken);
+        }
+
+        if (githubEmail == null || githubEmail.isBlank()) {
+            githubEmail = githubId + "@users.noreply.github.com";
+        }
+
+        User existingUser = userRepository.findByGithubId(githubId).orElse(null);
+        if (existingUser != null) {
+            String token = jwtTokenProvider.generateTokenFromUsername(existingUser.getId().toString());
+            return new GithubLoginResponse(false, token, null);
+        }
+
+        TempUser tempUser = TempUser.create(
+                githubId,
+                githubLogin,
+                githubAccessToken,
+                githubEmail,
+                profileImage);
+
+        TempUser saved = tempUserRepository.save(tempUser);
+
+        return new GithubLoginResponse(true, null, saved.getId());
     }
 
     @Transactional
@@ -109,6 +154,10 @@ public class AuthService {
             throw new ApiException(HttpStatus.CONFLICT, "CONFLICT", "이미 가입된 사용자입니다.");
         }
 
+        if (userRepository.existsByEmail(tempUser.getEmail())) {
+            throw new ApiException(HttpStatus.CONFLICT, "USER_001", "Email already exists");
+        }
+
         User user = User.githubUser(
                 tempUser.getEmail(),
                 request.getName(),
@@ -122,6 +171,134 @@ public class AuthService {
         tempUserRepository.delete(tempUser);
 
         return jwtTokenProvider.generateTokenFromUsername(savedUser.getId().toString());
+    }
+
+    private String exchangeGithubCodeForAccessToken(String code, String requestRedirectUri) {
+        if (githubClientId == null || githubClientId.isBlank()
+                || githubClientSecret == null || githubClientSecret.isBlank()) {
+            throw new ApiException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "GITHUB_003",
+                    "GitHub OAuth is not configured");
+        }
+
+        try {
+            String redirectUri = resolveGithubRedirectUri(requestRedirectUri);
+            StringBuilder body = new StringBuilder()
+                    .append("client_id=").append(encode(githubClientId))
+                    .append("&client_secret=").append(encode(githubClientSecret))
+                    .append("&code=").append(encode(code));
+
+            if (redirectUri != null && !redirectUri.isBlank()) {
+                body.append("&redirect_uri=").append(encode(redirectUri));
+            }
+
+            HttpRequest tokenRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://github.com/login/oauth/access_token"))
+                    .timeout(Duration.ofSeconds(20))
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(tokenRequest, HttpResponse.BodyHandlers.ofString());
+            JsonNode json = objectMapper.readTree(response.body());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300 || json.hasNonNull("error")) {
+                log.error("GitHub token exchange failed. status={}, body={}", response.statusCode(), response.body());
+                throw new ApiException(HttpStatus.BAD_REQUEST, "GITHUB_004", "Failed to exchange GitHub code");
+            }
+
+            String accessToken = json.path("access_token").asText(null);
+            if (accessToken == null || accessToken.isBlank()) {
+                log.error("GitHub token exchange response has no access token. body={}", response.body());
+                throw new ApiException(HttpStatus.BAD_REQUEST, "GITHUB_004", "Failed to exchange GitHub code");
+            }
+
+            return accessToken;
+        } catch (IOException e) {
+            log.error("Failed to call GitHub token API", e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        }
+    }
+
+    private JsonNode fetchGithubUser(String accessToken) {
+        try {
+            HttpRequest userRequest = githubApiRequest("https://api.github.com/user", accessToken);
+            HttpResponse<String> response = httpClient.send(userRequest, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.error("GitHub user API failed. status={}, body={}", response.statusCode(), response.body());
+                throw new ApiException(HttpStatus.BAD_REQUEST, "GITHUB_006", "Failed to fetch GitHub user");
+            }
+
+            return objectMapper.readTree(response.body());
+        } catch (IOException e) {
+            log.error("Failed to call GitHub user API", e);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        }
+    }
+
+    private String fetchPrimaryGithubEmail(String accessToken) {
+        try {
+            HttpRequest emailRequest = githubApiRequest("https://api.github.com/user/emails", accessToken);
+            HttpResponse<String> response = httpClient.send(emailRequest, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.warn("GitHub email API failed. status={}, body={}", response.statusCode(), response.body());
+                return null;
+            }
+
+            JsonNode emails = objectMapper.readTree(response.body());
+            for (JsonNode email : emails) {
+                if (email.path("primary").asBoolean(false) && email.path("verified").asBoolean(false)) {
+                    return email.path("email").asText(null);
+                }
+            }
+
+            for (JsonNode email : emails) {
+                if (email.path("verified").asBoolean(false)) {
+                    return email.path("email").asText(null);
+                }
+            }
+
+            return null;
+        } catch (IOException e) {
+            log.warn("Failed to call GitHub email API", e);
+            return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+    }
+
+    private HttpRequest githubApiRequest(String url, String accessToken) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(20))
+                .header("Accept", "application/vnd.github+json")
+                .header("Authorization", "Bearer " + accessToken)
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .GET()
+                .build();
+    }
+
+    private String resolveGithubRedirectUri(String requestRedirectUri) {
+        if (requestRedirectUri != null && !requestRedirectUri.isBlank()) {
+            return requestRedirectUri;
+        }
+
+        return githubRedirectUri;
+    }
+
+    private String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     public String localLogin(LocalLoginRequest request) {

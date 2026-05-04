@@ -10,4 +10,6 @@ public class GithubLoginRequest {
 
     @NotBlank(message = "code는 필수입니다.")
     private String code;
+
+    private String redirectUri;
 }
