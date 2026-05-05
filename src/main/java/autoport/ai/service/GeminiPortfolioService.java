@@ -26,13 +26,11 @@ public class GeminiPortfolioService {
     private final String model;
 
     public GeminiPortfolioService(
-            RestClient.Builder restClientBuilder,
-            ObjectMapper objectMapper,
             @Value("${gemini.api-key:}") String apiKey,
             @Value("${gemini.model:gemini-2.5-flash}") String model,
             @Value("${gemini.base-url:https://generativelanguage.googleapis.com/v1beta}") String baseUrl) {
-        this.restClient = restClientBuilder.baseUrl(baseUrl).build();
-        this.objectMapper = objectMapper;
+        this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+        this.objectMapper = new ObjectMapper();
         this.apiKey = apiKey;
         this.model = model;
     }
