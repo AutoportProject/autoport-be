@@ -85,7 +85,10 @@ public class GeminiPortfolioService {
                     "Gemini API request failed: " + e.getStatusCode() + " " + abbreviate(e.getResponseBodyAsString()));
         } catch (Exception e) {
             log.error("Failed to generate portfolio with Gemini", e);
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "AI_001", "Failed to generate portfolio");
+            throw new ApiException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "AI_001",
+                    "Failed to generate portfolio: " + e.getClass().getSimpleName() + " " + abbreviate(e.getMessage()));
         }
     }
 
