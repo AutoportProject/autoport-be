@@ -51,30 +51,11 @@ public class PortfolioService {
     public PortfolioGenerateResponse generatePortfolio(PortfolioGenerateRequest request) {
         // 인증은 SecurityConfig에서 처리되므로 별도 검증 불필요
 
-        AnalysisResultRequest analysisResult = request.getAnalysisResult();
-
         if (request.getTemplateId() == 999L || "fail".equalsIgnoreCase(request.getTone())) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "AI_001", "Failed to generate portfolio");
         }
 
-        if (geminiPortfolioService.isConfigured()) {
-            return geminiPortfolioService.generate(request);
-        }
-
-        String toneText = resolveToneText(request.getTone());
-        String bioText = (request.getBio() == null || request.getBio().isBlank()) ? "" : request.getBio() + " ";
-
-        PortfolioProjectResponse project = new PortfolioProjectResponse(
-                analysisResult.getProjectName(),
-                analysisResult.getSummary(),
-                analysisResult.getStacks(),
-                analysisResult.getHighlights());
-
-        return new PortfolioGenerateResponse(
-                "백엔드 개발자 " + request.getUserName(),
-                bioText + analysisResult.getSummary() + " 경험을 바탕으로 " + toneText + " 포트폴리오를 구성했습니다.",
-                List.of(project),
-                "2026-04-05T22:50:00Z");
+        return geminiPortfolioService.generate(request);
     }
 
     @Transactional
