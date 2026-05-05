@@ -8,15 +8,18 @@ import autoport.portfolio.dto.PortfolioProjectResponse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class GeminiPortfolioService {
 
@@ -74,7 +77,14 @@ public class GeminiPortfolioService {
                     Instant.now().toString());
         } catch (ApiException e) {
             throw e;
+        } catch (RestClientResponseException e) {
+            log.error("Gemini API request failed. status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new ApiException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "AI_001",
+                    "Gemini API request failed: " + e.getStatusCode() + " " + abbreviate(e.getResponseBodyAsString()));
         } catch (Exception e) {
+            log.error("Failed to generate portfolio with Gemini", e);
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "AI_001", "Failed to generate portfolio");
         }
     }
@@ -239,5 +249,16 @@ public class GeminiPortfolioService {
 
     private String blankToDefault(String value, String defaultValue) {
         return value == null || value.isBlank() ? defaultValue : value;
+    }
+
+    private String abbreviate(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String normalized = value.replaceAll("\\s+", " ").trim();
+        if (normalized.length() <= 300) {
+            return normalized;
+        }
+        return normalized.substring(0, 300) + "...";
     }
 }
