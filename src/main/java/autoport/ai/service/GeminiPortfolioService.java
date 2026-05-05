@@ -69,6 +69,10 @@ public class GeminiPortfolioService {
                     generated.getPortfolioTitle(),
                     generated.getIntroduction(),
                     generated.getProjects(),
+                    generated.getTechnicalContributions(),
+                    generated.getCollaborationStyle(),
+                    generated.getCodeHighlights(),
+                    generated.getProjectLinks(),
                     Instant.now().toString());
         } catch (ApiException e) {
             throw e;
@@ -81,8 +85,10 @@ public class GeminiPortfolioService {
         AnalysisResultRequest analysis = request.getAnalysisResult();
 
         return """
-                You are an expert technical portfolio writer for developer portfolios.
-                Write in Korean, with a professional and concise tone.
+                You are an expert AI portfolio generator for developer portfolios.
+                Write in Korean, with a professional and credible tone.
+                Use only the provided repository analysis data. If commit, PR, issue, code, deployment, or period data is missing, write a careful estimate and clearly phrase it as "추정".
+                Do not invent exact numbers such as percentages, dates, review counts, response times, or performance improvements unless they are provided.
                 Return valid JSON only. Do not wrap it in markdown.
 
                 JSON schema:
@@ -92,12 +98,52 @@ public class GeminiPortfolioService {
                   "projects": [
                     {
                       "name": "string",
+                      "oneLineDescription": "string",
                       "description": "string",
+                      "estimatedPeriod": "string",
+                      "role": "string",
                       "techStacks": ["string"],
+                      "mainFeatures": ["string"],
                       "highlights": ["string"]
                     }
-                  ]
+                  ],
+                  "technicalContributions": ["string"],
+                  "collaborationStyle": "string",
+                  "codeHighlights": ["string"],
+                  "projectLinks": ["string"]
                 }
+
+                Portfolio template requirements:
+                1. One-line title
+                - Include the user's name.
+                - Describe the developer identity inferred from the repository analysis.
+
+                2. Project detail
+                - Include project name, one-line summary, estimated development period, and the user's role.
+                - If commit data is not provided, describe the period and contribution as estimated from available repository analysis.
+
+                3. Tech stack
+                - Use the provided stack list as the primary source.
+                - Do not add unrelated technologies.
+
+                4. Main features
+                - Summarize likely user-facing or technical features from the summary and highlights.
+
+                5. Technical contribution and problem solving
+                - Turn meaningful changes into a story.
+                - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
+                - Avoid fake metrics.
+
+                6. Collaboration style
+                - Explain the collaboration style carefully.
+                - If PR/review/issue data is missing, say it should be verified with GitHub activity data instead of inventing counts.
+
+                7. Representative code / highlight
+                - Explain the core logic or most portfolio-worthy implementation based on the given analysis.
+
+                8. Project links
+                - Include known GitHub/deployment links only if provided in the input.
+                - If links are missing, return helpful placeholders like "GitHub 링크 입력 필요".
 
                 User name: %s
                 User bio: %s
@@ -149,8 +195,29 @@ public class GeminiPortfolioService {
                         value.getOrDefault("projects", List.of()),
                         new TypeReference<>() {
                         });
+                List<String> technicalContributions = objectMapper.convertValue(
+                        value.getOrDefault("technicalContributions", List.of()),
+                        new TypeReference<>() {
+                        });
+                String collaborationStyle = String.valueOf(value.getOrDefault("collaborationStyle", ""));
+                List<String> codeHighlights = objectMapper.convertValue(
+                        value.getOrDefault("codeHighlights", List.of()),
+                        new TypeReference<>() {
+                        });
+                List<String> projectLinks = objectMapper.convertValue(
+                        value.getOrDefault("projectLinks", List.of()),
+                        new TypeReference<>() {
+                        });
 
-                return new PortfolioGenerateResponse(title, introduction, projects, Instant.now().toString());
+                return new PortfolioGenerateResponse(
+                        title,
+                        introduction,
+                        projects,
+                        technicalContributions,
+                        collaborationStyle,
+                        codeHighlights,
+                        projectLinks,
+                        Instant.now().toString());
             } catch (Exception ignored) {
                 throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "AI_001", "Failed to parse Gemini response");
             }
