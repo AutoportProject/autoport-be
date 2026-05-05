@@ -1,5 +1,6 @@
 package autoport.portfolio.service;
 
+import autoport.ai.service.GeminiPortfolioService;
 import autoport.common.exception.ApiException;
 import autoport.config.UserPrincipal;
 import autoport.portfolio.dto.*;
@@ -30,6 +31,7 @@ public class PortfolioService {
     private final PortfolioRepository portfolioRepository;
     private final PortfolioProjectRepository portfolioProjectRepository;
     private final PortfolioTemplateRepository portfolioTemplateRepository;
+    private final GeminiPortfolioService geminiPortfolioService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -37,11 +39,13 @@ public class PortfolioService {
             UserRepository userRepository,
             PortfolioRepository portfolioRepository,
             PortfolioProjectRepository portfolioProjectRepository,
-            PortfolioTemplateRepository portfolioTemplateRepository) {
+            PortfolioTemplateRepository portfolioTemplateRepository,
+            GeminiPortfolioService geminiPortfolioService) {
         this.userRepository = userRepository;
         this.portfolioRepository = portfolioRepository;
         this.portfolioProjectRepository = portfolioProjectRepository;
         this.portfolioTemplateRepository = portfolioTemplateRepository;
+        this.geminiPortfolioService = geminiPortfolioService;
     }
 
     public PortfolioGenerateResponse generatePortfolio(PortfolioGenerateRequest request) {
@@ -51,6 +55,10 @@ public class PortfolioService {
 
         if (request.getTemplateId() == 999L || "fail".equalsIgnoreCase(request.getTone())) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "AI_001", "Failed to generate portfolio");
+        }
+
+        if (geminiPortfolioService.isConfigured()) {
+            return geminiPortfolioService.generate(request);
         }
 
         String toneText = resolveToneText(request.getTone());
