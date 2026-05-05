@@ -56,13 +56,14 @@ public class GeminiPortfolioService {
                             "temperature", 0.6,
                             "responseMimeType", "application/json"));
 
-            JsonNode response = restClient.post()
+            String responseBody = restClient.post()
                     .uri("/models/{model}:generateContent", model)
                     .header("x-goog-api-key", apiKey)
                     .body(body)
                     .retrieve()
-                    .body(JsonNode.class);
+                    .body(String.class);
 
+            JsonNode response = objectMapper.readTree(responseBody);
             String generatedText = extractText(response);
             PortfolioGenerateResponse generated = parseGeneratedPortfolio(generatedText);
 
