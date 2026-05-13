@@ -19,6 +19,6 @@ public class GithubRepoResponse {
     private Integer forksCount;
     private String updatedAt;
 
-    @JsonProperty("isPrivate")
+    @JsonProperty("private")
     private boolean isPrivate;
 }
