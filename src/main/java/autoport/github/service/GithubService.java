@@ -85,6 +85,7 @@ public class GithubService {
         List<String> languages = fetchLanguages(user.getGithubAccessToken(), owner, repoName);
         String readme = fetchReadme(user.getGithubAccessToken(), owner, repoName);
         GithubPage<Integer> commits = fetchCommitCount(user.getGithubAccessToken(), owner, repoName);
+        List<String> recentCommitMessages = fetchRecentCommitMessages(user.getGithubAccessToken(), owner, repoName);
 
         String description = repo.path("description").asText("");
         String mainLanguage = repo.path("language").asText(null);
@@ -102,7 +103,20 @@ public class GithubService {
                 repoName,
                 buildAiSummary(repoName, description, readmeSummary, activitySummary),
                 languages.isEmpty() ? List.of(defaultString(mainLanguage, "Unknown")) : languages,
-                highlights);
+                highlights,
+                repo.path("html_url").asText(null),
+                description,
+                mainLanguage,
+                readmeSummary,
+                activitySummary,
+                starCount,
+                forkCount,
+                openIssuesCount,
+                commitCount,
+                importanceScore,
+                repo.path("created_at").asText(null),
+                repo.path("updated_at").asText(null),
+                recentCommitMessages);
 
         return new GithubAnalyzeResponse(
                 repoId,
@@ -246,6 +260,37 @@ public class GithubService {
         }
     }
 
+    private List<String> fetchRecentCommitMessages(String accessToken, String owner, String repoName) {
+        try {
+            String body = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/repos/{owner}/{repo}/commits")
+                            .queryParam("per_page", 10)
+                            .queryParam("page", 1)
+                            .build(owner, repoName))
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode commits = objectMapper.readTree(body);
+            List<String> messages = new ArrayList<>();
+            for (JsonNode commit : commits) {
+                String message = commit.path("commit").path("message").asText("");
+                String firstLine = message.lines().findFirst().orElse("").trim();
+                if (hasText(firstLine)) {
+                    messages.add(firstLine);
+                }
+            }
+            return messages;
+        } catch (HttpClientErrorException.Conflict e) {
+            return List.of();
+        } catch (RestClientResponseException e) {
+            throw githubApiException(e, "Failed to fetch repository commits");
+        } catch (Exception e) {
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        }
+    }
+
     private GithubRepoResponse toRepoResponse(JsonNode repo) {
         return new GithubRepoResponse(
                 repo.path("id").asLong(),
@@ -321,21 +366,20 @@ public class GithubService {
     private List<String> buildHighlights(JsonNode repo, List<String> languages, int commitCount, String readme) {
         List<String> highlights = new ArrayList<>();
         if (!languages.isEmpty()) {
-            highlights.add("주요 기술 스택: " + String.join(", ", languages));
+            highlights.add("\uC8FC\uC694 \uAE30\uC220 \uC2A4\uD0DD: " + String.join(", ", languages));
         }
         if (hasText(repo.path("description").asText(null))) {
-            highlights.add("프로젝트 설명 기반 핵심 주제: " + repo.path("description").asText());
+            highlights.add("\uD504\uB85C\uC81D\uD2B8 \uC124\uBA85 \uAE30\uBC18 \uD575\uC2EC \uC8FC\uC81C: " + repo.path("description").asText());
         }
         if (hasText(readme)) {
-            highlights.add("README 문서를 기반으로 프로젝트 목적과 사용 흐름 확인 가능");
+            highlights.add("README \uBB38\uC11C\uB97C \uAE30\uBC18\uC73C\uB85C \uD504\uB85C\uC81D\uD2B8 \uBAA9\uC801\uACFC \uC0AC\uC6A9 \uD750\uB984 \uD655\uC778 \uAC00\uB2A5");
         }
-        highlights.add("최근 커밋 수 기준 활동량: " + commitCount + "개");
+        highlights.add("\uCD5C\uADFC \uCEE4\uBC0B \uC218 \uAE30\uC900 \uD65C\uB3D9\uB7C9: " + commitCount + "\uAC1C");
         if (repo.path("private").asBoolean(false)) {
-            highlights.add("비공개 저장소 분석");
+            highlights.add("\uBE44\uACF5\uAC1C \uC800\uC7A5\uC18C \uBD84\uC11D");
         }
         return highlights;
     }
-
     private String summarizeReadme(String readme, String description) {
         if (hasText(readme)) {
             String normalized = readme
@@ -351,16 +395,16 @@ public class GithubService {
         if (hasText(description)) {
             return description;
         }
-        return "README 또는 repository description이 없어 요약 정보가 부족합니다.";
+        return "README \uB610\uB294 repository description\uC774 \uC5C6\uC5B4 \uC694\uC57D \uC815\uBCF4\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.";
     }
 
     private String buildActivitySummary(int commits, int stars, int forks, int openIssues) {
-        return "커밋 " + commits + "개, 스타 " + stars + "개, 포크 " + forks
-                + "개, 열린 이슈 " + openIssues + "개 기준으로 활동성을 계산했습니다.";
+        return "\uCEE4\uBC0B " + commits + "\uAC1C, \uC2A4\uD0C0 " + stars + "\uAC1C, \uD3EC\uD06C " + forks
+                + "\uAC1C, \uC5F4\uB9B0 \uC774\uC288 " + openIssues + "\uAC1C \uAE30\uC900\uC73C\uB85C \uD65C\uB3D9\uC131\uC744 \uACC4\uC0B0\uD588\uC2B5\uB2C8\uB2E4.";
     }
 
     private String buildAiSummary(String repoName, String description, String readmeSummary, String activitySummary) {
-        return repoName + " 저장소 분석 결과. "
+        return repoName + " \uC800\uC7A5\uC18C \uBD84\uC11D \uACB0\uACFC. "
                 + (hasText(description) ? description + " " : "")
                 + readmeSummary + " " + activitySummary;
     }

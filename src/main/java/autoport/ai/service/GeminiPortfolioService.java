@@ -162,6 +162,21 @@ public class GeminiPortfolioService {
                 Requested tone: %s
                 Template id: %s
 
+                Repository facts from GitHub analysis:
+                Repo URL: %s
+                Description: %s
+                Main language: %s
+                README summary: %s
+                Activity summary: %s
+                Stars: %s
+                Forks: %s
+                Open issues: %s
+                Commit count: %s
+                Importance score: %s
+                Repository created at: %s
+                Repository updated at: %s
+                Recent commit messages: %s
+
                 Project name: %s
                 Project summary: %s
                 Tech stacks: %s
@@ -171,6 +186,19 @@ public class GeminiPortfolioService {
                 blankToEmpty(request.getBio()),
                 blankToDefault(request.getTone(), "professional"),
                 request.getTemplateId(),
+                blankToEmpty(analysis.getRepoUrl()),
+                blankToEmpty(analysis.getDescription()),
+                blankToEmpty(analysis.getMainLanguage()),
+                blankToEmpty(analysis.getReadmeSummary()),
+                blankToEmpty(analysis.getActivitySummary()),
+                numberToText(analysis.getStarCount()),
+                numberToText(analysis.getForkCount()),
+                numberToText(analysis.getOpenIssuesCount()),
+                numberToText(analysis.getCommitCount()),
+                numberToText(analysis.getImportanceScore()),
+                blankToEmpty(analysis.getRepositoryCreatedAt()),
+                blankToEmpty(analysis.getRepositoryUpdatedAt()),
+                listToText(analysis.getRecentCommitMessages()),
                 analysis.getProjectName(),
                 analysis.getSummary(),
                 analysis.getStacks(),
@@ -253,6 +281,14 @@ public class GeminiPortfolioService {
 
     private String blankToDefault(String value, String defaultValue) {
         return value == null || value.isBlank() ? defaultValue : value;
+    }
+
+    private String numberToText(Integer value) {
+        return value == null ? "" : value.toString();
+    }
+
+    private String listToText(List<String> values) {
+        return values == null ? "" : values.toString();
     }
 
     private String abbreviate(String value) {
