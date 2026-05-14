@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
 import java.util.Map;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.stream.StreamSupport;
 
 @Service
@@ -85,7 +87,6 @@ public class GithubService {
         List<String> languages = fetchLanguages(user.getGithubAccessToken(), owner, repoName);
         String readme = fetchReadme(user.getGithubAccessToken(), owner, repoName);
         GithubPage<Integer> commits = fetchCommitCount(user.getGithubAccessToken(), owner, repoName);
-        List<String> recentCommitMessages = fetchRecentCommitMessages(user.getGithubAccessToken(), owner, repoName);
 
         String description = repo.path("description").asText("");
         String mainLanguage = repo.path("language").asText(null);
@@ -93,6 +94,7 @@ public class GithubService {
         int forkCount = repo.path("forks_count").asInt(0);
         int openIssuesCount = repo.path("open_issues_count").asInt(0);
         int commitCount = commits.totalElements() > 0 ? commits.totalElements() : commits.content();
+        CommitActivity commitActivity = fetchCommitActivity(user.getGithubAccessToken(), owner, repoName, commitCount);
         int importanceScore = calculateImportanceScore(starCount, forkCount, commitCount, languages.size(), hasText(readme));
 
         List<String> highlights = buildHighlights(repo, languages, commitCount, readme);
@@ -116,7 +118,10 @@ public class GithubService {
                 importanceScore,
                 repo.path("created_at").asText(null),
                 repo.path("updated_at").asText(null),
-                recentCommitMessages);
+                commitActivity.firstCommitAt(),
+                commitActivity.latestCommitAt(),
+                buildDevelopmentPeriod(commitActivity.firstCommitAt(), commitActivity.latestCommitAt()),
+                commitActivity.recentMessages());
 
         return new GithubAnalyzeResponse(
                 repoId,
@@ -260,7 +265,7 @@ public class GithubService {
         }
     }
 
-    private List<String> fetchRecentCommitMessages(String accessToken, String owner, String repoName) {
+    private CommitActivity fetchCommitActivity(String accessToken, String owner, String repoName, int commitCount) {
         try {
             String body = restClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -274,20 +279,61 @@ public class GithubService {
 
             JsonNode commits = objectMapper.readTree(body);
             List<String> messages = new ArrayList<>();
+            String latestCommitAt = null;
             for (JsonNode commit : commits) {
+                if (latestCommitAt == null) {
+                    latestCommitAt = commit.path("commit").path("author").path("date").asText(null);
+                }
                 String message = commit.path("commit").path("message").asText("");
                 String firstLine = message.lines().findFirst().orElse("").trim();
                 if (hasText(firstLine)) {
                     messages.add(firstLine);
                 }
             }
-            return messages;
+
+            String firstCommitAt = fetchOldestCommitDate(accessToken, owner, repoName, commitCount, latestCommitAt);
+            return new CommitActivity(messages, firstCommitAt, latestCommitAt);
         } catch (HttpClientErrorException.Conflict e) {
-            return List.of();
+            return new CommitActivity(List.of(), null, null);
         } catch (RestClientResponseException e) {
             throw githubApiException(e, "Failed to fetch repository commits");
         } catch (Exception e) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        }
+    }
+
+    private String fetchOldestCommitDate(
+            String accessToken,
+            String owner,
+            String repoName,
+            int commitCount,
+            String fallbackDate) {
+        if (commitCount <= 1) {
+            return fallbackDate;
+        }
+
+        try {
+            String body = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/repos/{owner}/{repo}/commits")
+                            .queryParam("per_page", 1)
+                            .queryParam("page", commitCount)
+                            .build(owner, repoName))
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode commits = objectMapper.readTree(body);
+            if (commits.isArray() && !commits.isEmpty()) {
+                return commits.get(0).path("commit").path("author").path("date").asText(fallbackDate);
+            }
+            return fallbackDate;
+        } catch (HttpClientErrorException.Conflict e) {
+            return fallbackDate;
+        } catch (RestClientResponseException e) {
+            throw githubApiException(e, "Failed to fetch repository commits");
+        } catch (Exception e) {
+            return fallbackDate;
         }
     }
 
@@ -403,6 +449,29 @@ public class GithubService {
                 + "\uAC1C, \uC5F4\uB9B0 \uC774\uC288 " + openIssues + "\uAC1C \uAE30\uC900\uC73C\uB85C \uD65C\uB3D9\uC131\uC744 \uACC4\uC0B0\uD588\uC2B5\uB2C8\uB2E4.";
     }
 
+    private String buildDevelopmentPeriod(String firstCommitAt, String latestCommitAt) {
+        if (!hasText(firstCommitAt) || !hasText(latestCommitAt)) {
+            return "";
+        }
+
+        try {
+            Instant first = Instant.parse(firstCommitAt);
+            Instant latest = Instant.parse(latestCommitAt);
+            long days = Math.max(1, ChronoUnit.DAYS.between(first, latest) + 1);
+            long months = Math.max(1, Math.round(days / 30.0));
+
+            return firstCommitAt.substring(0, 10)
+                    + " ~ "
+                    + latestCommitAt.substring(0, 10)
+                    + " ("
+                    + "\uCEE4\uBC0B \uAE30\uC900, \uC57D "
+                    + months
+                    + "\uAC1C\uC6D4)";
+        } catch (Exception e) {
+            return firstCommitAt + " ~ " + latestCommitAt + " (\uCEE4\uBC0B \uAE30\uC900)";
+        }
+    }
+
     private String buildAiSummary(String repoName, String description, String readmeSummary, String activitySummary) {
         return repoName + " \uC800\uC7A5\uC18C \uBD84\uC11D \uACB0\uACFC. "
                 + (hasText(description) ? description + " " : "")
@@ -428,5 +497,8 @@ public class GithubService {
     }
 
     private record GithubPage<T>(T content, int totalElements) {
+    }
+
+    private record CommitActivity(List<String> recentMessages, String firstCommitAt, String latestCommitAt) {
     }
 }

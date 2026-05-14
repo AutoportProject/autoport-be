@@ -14,7 +14,6 @@ public class PortfolioGenerateResponse {
     private String introduction;
     private List<PortfolioProjectResponse> projects;
     private List<String> technicalContributions;
-    private String collaborationStyle;
     private List<String> codeHighlights;
     private List<String> projectLinks;
     private String generatedAt;

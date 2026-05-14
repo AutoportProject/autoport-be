@@ -26,5 +26,8 @@ public class AiInputData {
     private Integer importanceScore;
     private String repositoryCreatedAt;
     private String repositoryUpdatedAt;
+    private String firstCommitAt;
+    private String latestCommitAt;
+    private String developmentPeriod;
     private List<String> recentCommitMessages;
 }

@@ -72,7 +72,6 @@ public class GeminiPortfolioService {
                     generated.getIntroduction(),
                     generated.getProjects(),
                     generated.getTechnicalContributions(),
-                    generated.getCollaborationStyle(),
                     generated.getCodeHighlights(),
                     generated.getProjectLinks(),
                     Instant.now().toString());
@@ -99,7 +98,7 @@ public class GeminiPortfolioService {
         return """
                 You are an expert AI portfolio generator for developer portfolios.
                 Write in Korean, with a professional and credible tone.
-                Use only the provided repository analysis data. If commit, PR, issue, code, deployment, or period data is missing, write a careful estimate and clearly phrase it as "추정".
+                Use only the provided repository analysis data. If code or deployment data is missing, clearly say that the information needs to be added.
                 Do not invent exact numbers such as percentages, dates, review counts, response times, or performance improvements unless they are provided.
                 Return valid JSON only. Do not wrap it in markdown.
 
@@ -120,7 +119,6 @@ public class GeminiPortfolioService {
                     }
                   ],
                   "technicalContributions": ["string"],
-                  "collaborationStyle": "string",
                   "codeHighlights": ["string"],
                   "projectLinks": ["string"]
                 }
@@ -128,34 +126,32 @@ public class GeminiPortfolioService {
                 Portfolio template requirements:
                 1. One-line title
                 - Include the user's name.
+                - Keep it short enough for a hero/title area.
                 - Describe the developer identity inferred from the repository analysis.
 
                 2. Project detail
-                - Include project name, one-line summary, estimated development period, and the user's role.
-                - If commit data is not provided, describe the period and contribution as estimated from available repository analysis.
+                - Include project name, one-line summary, development period, and the user's role.
+                - Use Development period from commit analysis as the project's estimatedPeriod when it is provided.
+                - If Development period is empty, write "\uAC1C\uBC1C \uAE30\uAC04 \uC815\uBCF4 \uC5C6\uC74C".
 
                 3. Tech stack
                 - Use the provided stack list as the primary source.
                 - Do not add unrelated technologies.
 
                 4. Main features
-                - Summarize likely user-facing or technical features from the summary and highlights.
+                - Summarize likely user-facing or technical features from the summary, README, and highlights.
 
                 5. Technical contribution and problem solving
                 - Turn meaningful changes into a story.
                 - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
                 - Avoid fake metrics.
 
-                6. Collaboration style
-                - Explain the collaboration style carefully.
-                - If PR/review/issue data is missing, say it should be verified with GitHub activity data instead of inventing counts.
-
-                7. Representative code / highlight
+                6. Representative code / highlight
                 - Explain the core logic or most portfolio-worthy implementation based on the given analysis.
 
-                8. Project links
+                7. Project links
                 - Include known GitHub/deployment links only if provided in the input.
-                - If links are missing, return helpful placeholders like "GitHub 링크 입력 필요".
+                - If links are missing, return helpful placeholders like "GitHub \uB9C1\uD06C \uC785\uB825 \uD544\uC694".
 
                 User name: %s
                 User bio: %s
@@ -175,6 +171,9 @@ public class GeminiPortfolioService {
                 Importance score: %s
                 Repository created at: %s
                 Repository updated at: %s
+                First commit at: %s
+                Latest commit at: %s
+                Development period: %s
                 Recent commit messages: %s
 
                 Project name: %s
@@ -198,6 +197,9 @@ public class GeminiPortfolioService {
                 numberToText(analysis.getImportanceScore()),
                 blankToEmpty(analysis.getRepositoryCreatedAt()),
                 blankToEmpty(analysis.getRepositoryUpdatedAt()),
+                blankToEmpty(analysis.getFirstCommitAt()),
+                blankToEmpty(analysis.getLatestCommitAt()),
+                blankToEmpty(analysis.getDevelopmentPeriod()),
                 listToText(analysis.getRecentCommitMessages()),
                 analysis.getProjectName(),
                 analysis.getSummary(),
@@ -239,7 +241,6 @@ public class GeminiPortfolioService {
                         value.getOrDefault("technicalContributions", List.of()),
                         new TypeReference<>() {
                         });
-                String collaborationStyle = String.valueOf(value.getOrDefault("collaborationStyle", ""));
                 List<String> codeHighlights = objectMapper.convertValue(
                         value.getOrDefault("codeHighlights", List.of()),
                         new TypeReference<>() {
@@ -254,7 +255,6 @@ public class GeminiPortfolioService {
                         introduction,
                         projects,
                         technicalContributions,
-                        collaborationStyle,
                         codeHighlights,
                         projectLinks,
                         Instant.now().toString());
