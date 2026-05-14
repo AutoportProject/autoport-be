@@ -58,7 +58,7 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
             "http://localhost:3000",
-            "https://autoport-fe-git-develop.vercel.app",
+            "https://autoport-fe.vercel.app",
             "https://autoport-be.onrender.com"
         ));
 
