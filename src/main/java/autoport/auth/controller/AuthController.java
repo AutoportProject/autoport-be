@@ -36,6 +36,12 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(new TokenResponse(accessToken)));
     }
 
+    @PostMapping("/github/signup")
+    public ResponseEntity<ApiResponse<TokenResponse>> githubSignupAlias(
+            @Valid @RequestBody GithubSignupRequest request) {
+        return githubSignup(request);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<TokenResponse>> localLogin(
             @Valid @RequestBody LocalLoginRequest request) {
