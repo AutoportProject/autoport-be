@@ -128,6 +128,19 @@ public class AuthService {
             return new GithubLoginResponse(false, token, null);
         }
 
+        User existingEmailUser = userRepository.findByEmail(githubEmail).orElse(null);
+        if (existingEmailUser != null) {
+            existingEmailUser.connectGithub(
+                    githubId,
+                    githubLogin,
+                    githubAccessToken,
+                    profileImage);
+
+            User savedUser = userRepository.save(existingEmailUser);
+            String token = jwtTokenProvider.generateTokenFromUsername(savedUser.getId().toString());
+            return new GithubLoginResponse(false, token, null);
+        }
+
         TempUser tempUser = TempUser.create(
                 githubId,
                 githubLogin,
