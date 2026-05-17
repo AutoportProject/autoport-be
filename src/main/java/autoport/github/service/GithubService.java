@@ -33,6 +33,7 @@ import java.util.stream.StreamSupport;
 public class GithubService {
 
     private static final String GITHUB_API_BASE_URL = "https://api.github.com";
+    private static final int COMMIT_COUNT_PER_PAGE = 100;
 
     private final RestClient restClient = RestClient.builder()
             .baseUrl(GITHUB_API_BASE_URL)
@@ -246,7 +247,7 @@ public class GithubService {
             org.springframework.http.ResponseEntity<String> response = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/repos/{owner}/{repo}/commits")
-                            .queryParam("per_page", 1)
+                            .queryParam("per_page", COMMIT_COUNT_PER_PAGE)
                             .queryParam("page", 1)
                             .build(owner, repoName))
                     .headers(headers -> headers.setBearerAuth(accessToken))
@@ -255,7 +256,13 @@ public class GithubService {
 
             JsonNode commits = objectMapper.readTree(response.getBody());
             int currentPageCount = commits.isArray() ? commits.size() : 0;
-            return new GithubPage<>(currentPageCount, parseTotalElements(response.getHeaders().getFirst("Link"), 1, 1, currentPageCount));
+            return new GithubPage<>(
+                    currentPageCount,
+                    parseTotalElements(
+                            response.getHeaders().getFirst("Link"),
+                            1,
+                            COMMIT_COUNT_PER_PAGE,
+                            currentPageCount));
         } catch (HttpClientErrorException.Conflict e) {
             return new GithubPage<>(0, 0);
         } catch (RestClientResponseException e) {
