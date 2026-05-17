@@ -51,10 +51,6 @@ public class PortfolioService {
     public PortfolioGenerateResponse generatePortfolio(PortfolioGenerateRequest request) {
         // 인증은 SecurityConfig에서 처리되므로 별도 검증 불필요
 
-        if (request.getTemplateId() == 999L || "fail".equalsIgnoreCase(request.getTone())) {
-            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "AI_001", "Failed to generate portfolio");
-        }
-
         return geminiPortfolioService.generate(request);
     }
 

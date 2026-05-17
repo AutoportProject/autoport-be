@@ -70,40 +70,6 @@ public class AuthService {
     public GithubLoginResponse githubLogin(GithubLoginRequest request) {
         String code = request.getCode();
 
-        if ("existing-user-code".equals(code)) {
-            User user = userRepository.findByGithubId("github-existing-123")
-                    .orElseGet(() -> userRepository.save(User.githubUser(
-                            "github-existing@email.com",
-                            "기존깃허브유저",
-                            "GitHub 로그인 사용자",
-                            "github-existing-123",
-                            "existing-user",
-                            "mock-github-token",
-                            "https://github.com/avatar.png")));
-
-            String token = jwtTokenProvider.generateTokenFromUsername(user.getId().toString());
-            return new GithubLoginResponse(
-                    false,
-                    token,
-                    null);
-        }
-
-        if ("new-user-code".equals(code)) {
-            TempUser tempUser = TempUser.create(
-                    "github-new-123",
-                    "new-github-user",
-                    "mock-github-token",
-                    "new-github-user@email.com",
-                    "https://github.com/avatar.png");
-
-            TempUser saved = tempUserRepository.save(tempUser);
-
-            return new GithubLoginResponse(
-                    true,
-                    null,
-                    saved.getId());
-        }
-
         String githubAccessToken = exchangeGithubCodeForAccessToken(code, request.getRedirectUri());
         JsonNode githubUser = fetchGithubUser(githubAccessToken);
 
