@@ -125,9 +125,21 @@ public class GeminiPortfolioService {
 
                 Portfolio template requirements:
                 1. One-line title
+                - Write one natural Korean sentence, not a label.
                 - Include the user's name.
-                - Keep it short enough for a hero/title area.
-                - Describe the developer identity inferred from the repository analysis.
+                - Do not use a colon after the user's name.
+                - Do not use exaggerated words such as "\uC804\uBB38\uAC00", "\uB9C8\uC2A4\uD130", "\uCD5C\uACE0", "\uD0C1\uC6D4\uD55C".
+                - Prefer experience-based endings such as "\uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790", "\uACBD\uD5D8\uC744 \uAC00\uC9C4 \uAC1C\uBC1C\uC790", "\uAC1C\uC120\uD55C \uAC1C\uBC1C\uC790", or "\uC124\uACC4\uD55C \uAC1C\uBC1C\uC790".
+                - Keep it under 35 Korean characters when possible.
+                - If repository data is sparse, describe the project experience rather than claiming broad expertise.
+                - Good example: "RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1\uC744 \uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790 \uC774\uCC44\uC6D0".
+                - Bad example: "\uC774\uCC44\uC6D0: \uBA40\uD2F0\uBAA8\uB2EC RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1 \uC2DC\uC2A4\uD15C \uAC1C\uBC1C \uC804\uBB38\uAC00".
+
+                Introduction
+                - Explain the user's project experience in 2-3 natural Korean sentences.
+                - Do not introduce the user as an expert unless the input data strongly supports it.
+                - Base the introduction on what was implemented, improved, designed, or analyzed in the repository.
+                - Avoid broad claims that are not supported by the repository data.
 
                 2. Project detail
                 - Include project name, one-line summary, development period, and the user's role.
