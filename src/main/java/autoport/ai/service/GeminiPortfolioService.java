@@ -156,6 +156,7 @@ public class GeminiPortfolioService {
                 User name: %s
                 User bio: %s
                 Requested tone: %s
+                User emphasis request: %s
                 Template id: %s
 
                 Repository facts from GitHub analysis:
@@ -184,6 +185,7 @@ public class GeminiPortfolioService {
                 request.getUserName(),
                 blankToEmpty(request.getBio()),
                 blankToDefault(request.getTone(), "professional"),
+                blankToEmpty(request.getEmphasis()),
                 request.getTemplateId(),
                 blankToEmpty(analysis.getRepoUrl()),
                 blankToEmpty(analysis.getDescription()),

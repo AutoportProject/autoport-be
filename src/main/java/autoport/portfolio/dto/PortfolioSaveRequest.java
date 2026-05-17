@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,7 +19,6 @@ public class PortfolioSaveRequest {
     @NotBlank(message = "bio는 필수입니다.")
     private String bio;
 
-    @NotNull(message = "templateId는 필수입니다.")
     private Long templateId;
 
     @Valid

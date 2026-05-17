@@ -27,6 +27,8 @@ import java.util.List;
 @Service
 public class PortfolioService {
 
+    private static final Long DEFAULT_TEMPLATE_ID = 1L;
+
     private final UserRepository userRepository;
     private final PortfolioRepository portfolioRepository;
     private final PortfolioProjectRepository portfolioProjectRepository;
@@ -59,7 +61,7 @@ public class PortfolioService {
         Long userId = getCurrentUserId();
 
         User user = findUser(userId);
-        PortfolioTemplate template = findTemplate(request.getTemplateId());
+        PortfolioTemplate template = findTemplateOrDefault(request.getTemplateId());
 
         Portfolio portfolio = Portfolio.create(
                 user,
@@ -91,7 +93,7 @@ public class PortfolioService {
 
         checkOwner(portfolio, userId);
 
-        PortfolioTemplate template = findTemplate(request.getTemplateId());
+        PortfolioTemplate template = findTemplateOrDefault(request.getTemplateId());
 
         portfolio.update(
                 template,
@@ -248,6 +250,10 @@ public class PortfolioService {
                         HttpStatus.BAD_REQUEST,
                         "BAD_REQUEST",
                         "templateId가 올바르지 않습니다."));
+    }
+
+    private PortfolioTemplate findTemplateOrDefault(Long templateId) {
+        return findTemplate(templateId != null ? templateId : DEFAULT_TEMPLATE_ID);
     }
 
     private void checkOwner(Portfolio portfolio, Long userId) {
