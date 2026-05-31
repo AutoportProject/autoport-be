@@ -190,6 +190,9 @@ public class GeminiPortfolioService {
                 - Explain the core logic or most portfolio-worthy implementation based on the given analysis.
                 - Keep explanations concise and focused on why the code matters.
                 - codeHighlights should explain why a specific implementation is meaningful, not repeat the project description.
+                - Do not leave codeHighlights empty when recent commit messages, README summary, highlights, or project summary contain implementation clues.
+                - If actual source code snippets are not provided, infer representative implementation points from recent commit messages and repository facts without pretending that source code was inspected.
+                - Good codeHighlights should mention a concrete module, API, data flow, rendering fix, authentication flow, update logic, or analysis pipeline when such evidence exists.
 
                 Highlights
                 - Avoid ending every highlight with "\uD588\uC2B5\uB2C8\uB2E4".
