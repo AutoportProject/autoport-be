@@ -101,6 +101,7 @@ public class GeminiPortfolioService {
                 Use only the provided repository analysis data. If code or deployment data is missing, clearly say that the information needs to be added.
                 Do not invent exact numbers such as percentages, dates, review counts, response times, or performance improvements unless they are provided.
                 Return valid JSON only. Do not wrap it in markdown.
+                Do not use markdown syntax in any string value. Plain text only. Do not use **bold**, *italic*, ## headings, bullet markers, or markdown links inside JSON string values.
 
                 JSON schema:
                 {
@@ -143,8 +144,13 @@ public class GeminiPortfolioService {
 
                 2. Project detail
                 - Include project name, one-line summary, development period, and the user's role.
+                - The project description must include the project purpose, target users, and core feature flow when the repository data supports them.
                 - Use Development period from commit analysis as the project's estimatedPeriod when it is provided.
+                - Development period is calculated from the entire repository commit history, not from one user's personal commits.
                 - If Development period is empty, write "\uAC1C\uBC1C \uAE30\uAC04 \uC815\uBCF4 \uC5C6\uC74C".
+                - For role: if the repository appears to be a solo repository, write "\uD480\uC2A4\uD0DD \uAC1C\uBC1C\uC790 (1\uC778 \uAC1C\uBC1C)".
+                - For role: if the repository appears collaborative, infer the role from commit share, contribution areas, changed files, commit messages, and repository analysis.
+                - For role: if the role cannot be inferred, write "\uC5ED\uD560 \uC815\uBCF4 \uC5C6\uC74C".
 
                 3. Tech stack
                 - Use the provided stack list as the primary source.

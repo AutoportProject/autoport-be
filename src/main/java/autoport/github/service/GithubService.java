@@ -471,11 +471,11 @@ public class GithubService {
                     + " ~ "
                     + latestCommitAt.substring(0, 10)
                     + " ("
-                    + "\uCEE4\uBC0B \uAE30\uC900, \uC57D "
+                    + "\uC804\uCCB4 \uCEE4\uBC0B \uAE30\uC900, \uC57D "
                     + months
                     + "\uAC1C\uC6D4)";
         } catch (Exception e) {
-            return firstCommitAt + " ~ " + latestCommitAt + " (\uCEE4\uBC0B \uAE30\uC900)";
+            return firstCommitAt + " ~ " + latestCommitAt + " (\uC804\uCCB4 \uCEE4\uBC0B \uAE30\uC900)";
         }
     }
 
