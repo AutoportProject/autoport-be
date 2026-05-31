@@ -107,6 +107,8 @@ public class GeminiPortfolioService {
                 Do not use vague adjectives such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the repository data provides concrete evidence.
                 Do not force every array to have the same number of items. Omit weak or repetitive items.
                 If User emphasis request is provided, place that topic first in technicalContributions or highlights.
+                Write the introduction in first person. Prefer "\uC800\uB294 ..." over expressions like "\uAC1C\uBC1C\uC790\uB294 ..." or "\uC815\uBBFC\uC11C \uAC1C\uBC1C\uC790\uB294 ...".
+                Avoid user-facing guide phrases such as "\uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4", "\uC785\uB825 \uD544\uC694", "\uC815\uBCF4\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4", or "\uC81C\uACF5\uD569\uB2C8\uB2E4".
 
                 JSON schema:
                 {
@@ -142,7 +144,8 @@ public class GeminiPortfolioService {
                 - Bad example: "\uC774\uCC44\uC6D0: \uBA40\uD2F0\uBAA8\uB2EC RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1 \uC2DC\uC2A4\uD15C \uAC1C\uBC1C \uC804\uBB38\uAC00".
 
                 Introduction
-                - Explain the user's project experience in 2-3 natural Korean sentences.
+                - Explain the user's project experience in 2-3 natural Korean sentences using first person.
+                - Start naturally with "\uC800\uB294" when possible.
                 - Do not introduce the user as an expert unless the input data strongly supports it.
                 - Base the introduction on what was implemented, improved, designed, or analyzed in the repository.
                 - Avoid broad claims that are not supported by the repository data.
@@ -171,14 +174,24 @@ public class GeminiPortfolioService {
                 - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
                 - Analyze recent commit messages and reflect concrete implementation work such as feature additions, bug fixes, refactoring, documentation changes, and rendering fixes.
                 - Avoid generic contribution items. Prefer details that can be traced to commit messages, README, highlights, or repository facts.
+                - Vary item length deliberately. Use one short, direct item and one more detailed item when appropriate.
+                - Do not make all technicalContributions the same length.
                 - Avoid fake metrics.
 
                 6. Representative code / highlight
                 - Explain the core logic or most portfolio-worthy implementation based on the given analysis.
+                - Keep explanations concise and focused on why the code matters.
+
+                Highlights
+                - Avoid ending every highlight with "\uD588\uC2B5\uB2C8\uB2E4".
+                - Mix sentence endings naturally, such as noun phrases, "\uAC1C\uC120", "\uC815\uB9AC", "\uBCF4\uAC15", "\uD574\uACB0", and complete sentences.
+                - Keep highlights concise and do not make every item the same length.
 
                 7. Project links
-                - Include known GitHub/deployment links only if provided in the input.
-                - If links are missing, return helpful placeholders like "GitHub \uB9C1\uD06C \uC785\uB825 \uD544\uC694".
+                - If Repo URL is provided, include the raw URL exactly as one projectLinks item.
+                - Do not add labels such as "GitHub:" inside projectLinks values.
+                - Do not fabricate deployment links.
+                - If no link is provided, return an empty projectLinks array. Do not write "\uC785\uB825 \uD544\uC694".
 
                 User name: %s
                 User bio: %s
