@@ -101,13 +101,17 @@ public class GeminiPortfolioService {
                 Use only the provided repository analysis data. If code or deployment data is missing, clearly say that the information needs to be added.
                 Do not invent exact numbers such as percentages, dates, review counts, response times, or performance improvements unless they are provided.
                 Return valid JSON only. Do not wrap it in markdown.
+                Never include text outside the JSON object. Never include markdown fences.
+                Return empty arrays as [] instead of null.
                 Do not use markdown syntax in any string value. Plain text only. Do not use **bold**, *italic*, ## headings, bullet markers, or markdown links inside JSON string values.
                 Vary sentence rhythm intentionally. Mix short and long sentences across array items.
                 Do not repeat the same ending pattern such as "\uAD6C\uD604\uD588\uC2B5\uB2C8\uB2E4" or "\uC124\uACC4\uD588\uC2B5\uB2C8\uB2E4" three or more times in a row.
                 Do not use vague adjectives such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the repository data provides concrete evidence.
                 Do not force every array to have the same number of items. Omit weak or repetitive items.
                 If User emphasis request is provided, place that topic first in technicalContributions or highlights.
-                Write the introduction in first person. Prefer "\uC800\uB294 ..." over expressions like "\uAC1C\uBC1C\uC790\uB294 ..." or "\uC815\uBBFC\uC11C \uAC1C\uBC1C\uC790\uB294 ...".
+                Keep field responsibilities separate: description explains what the project is, mainFeatures explains what it does for users, technicalContributions explains how it was implemented, and codeHighlights explains why a specific implementation matters.
+                If Importance score is 5 or lower, keep the output brief and focus mainly on highlights.
+                Write the introduction without a subject or in first person. Avoid third-person expressions like "\uC815\uBBFC\uC11C\uB294", "\uAC1C\uBC1C\uC790\uB294", or "\uC815\uBBFC\uC11C \uAC1C\uBC1C\uC790\uB294".
                 Avoid user-facing guide phrases such as "\uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4", "\uC785\uB825 \uD544\uC694", "\uC815\uBCF4\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4", or "\uC81C\uACF5\uD569\uB2C8\uB2E4".
 
                 JSON schema:
@@ -144,8 +148,9 @@ public class GeminiPortfolioService {
                 - Bad example: "\uC774\uCC44\uC6D0: \uBA40\uD2F0\uBAA8\uB2EC RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1 \uC2DC\uC2A4\uD15C \uAC1C\uBC1C \uC804\uBB38\uAC00".
 
                 Introduction
-                - Explain the user's project experience in 2-3 natural Korean sentences using first person.
-                - Start naturally with "\uC800\uB294" when possible.
+                - Explain the user's project experience in 2-3 natural Korean sentences.
+                - Start without an explicit subject or with "\uC800\uB294"; choose whichever sounds more natural.
+                - Do not start with third-person phrasing such as "\uC815\uBBFC\uC11C\uB294" or "\uAC1C\uBC1C\uC790\uB294".
                 - Do not introduce the user as an expert unless the input data strongly supports it.
                 - Base the introduction on what was implemented, improved, designed, or analyzed in the repository.
                 - Avoid broad claims that are not supported by the repository data.
@@ -153,6 +158,7 @@ public class GeminiPortfolioService {
                 2. Project detail
                 - Include project name, one-line summary, development period, and the user's role.
                 - The project description must include the project purpose, target users, and core feature flow when the repository data supports them.
+                - The project description should answer what the project is, not how it was implemented.
                 - Use Development period from commit analysis as the project's estimatedPeriod when it is provided.
                 - Development period is calculated from the entire repository commit history, not from one user's personal commits.
                 - If Development period is empty, write "\uAC1C\uBC1C \uAE30\uAC04 \uC815\uBCF4 \uC5C6\uC74C".
@@ -166,11 +172,13 @@ public class GeminiPortfolioService {
 
                 4. Main features
                 - Summarize likely user-facing or technical features from the summary, README, and highlights.
+                - mainFeatures should describe what the project does from a user or service perspective, not implementation details.
                 - Order mainFeatures by importance.
                 - Omit less important features instead of filling the list evenly.
 
                 5. Technical contribution and problem solving
                 - Turn meaningful changes into a story.
+                - technicalContributions should describe how the project was implemented or improved.
                 - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
                 - Analyze recent commit messages and reflect concrete implementation work such as feature additions, bug fixes, refactoring, documentation changes, and rendering fixes.
                 - Avoid generic contribution items. Prefer details that can be traced to commit messages, README, highlights, or repository facts.
@@ -181,6 +189,7 @@ public class GeminiPortfolioService {
                 6. Representative code / highlight
                 - Explain the core logic or most portfolio-worthy implementation based on the given analysis.
                 - Keep explanations concise and focused on why the code matters.
+                - codeHighlights should explain why a specific implementation is meaningful, not repeat the project description.
 
                 Highlights
                 - Avoid ending every highlight with "\uD588\uC2B5\uB2C8\uB2E4".
