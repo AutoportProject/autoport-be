@@ -22,7 +22,7 @@ public class Portfolio {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "template_id", nullable = false)
+    @JoinColumn(name = "template_id")
     private PortfolioTemplate template;
 
     @Column(nullable = false, length = 255)

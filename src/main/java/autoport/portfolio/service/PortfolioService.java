@@ -27,8 +27,6 @@ import java.util.List;
 @Service
 public class PortfolioService {
 
-    private static final Long DEFAULT_TEMPLATE_ID = 1L;
-
     private final UserRepository userRepository;
     private final PortfolioRepository portfolioRepository;
     private final PortfolioProjectRepository portfolioProjectRepository;
@@ -61,7 +59,7 @@ public class PortfolioService {
         Long userId = getCurrentUserId();
 
         User user = findUser(userId);
-        PortfolioTemplate template = findTemplateOrDefault(request.getTemplateId());
+        PortfolioTemplate template = findTemplateIfPresent(request.getTemplateId());
 
         Portfolio portfolio = Portfolio.create(
                 user,
@@ -93,7 +91,7 @@ public class PortfolioService {
 
         checkOwner(portfolio, userId);
 
-        PortfolioTemplate template = findTemplateOrDefault(request.getTemplateId());
+        PortfolioTemplate template = findTemplateIfPresent(request.getTemplateId());
 
         portfolio.update(
                 template,
@@ -182,7 +180,7 @@ public class PortfolioService {
                 portfolio.getId(),
                 portfolio.getTitle(),
                 portfolio.getBio(),
-                portfolio.getTemplate().getId(),
+                getTemplateId(portfolio),
                 portfolio.getIsPublic(),
                 portfolio.getFeaturedProjectId(),
                 projects,
@@ -218,7 +216,7 @@ public class PortfolioService {
         return new PortfolioListItemResponse(
                 portfolio.getId(),
                 portfolio.getTitle(),
-                portfolio.getTemplate().getId(),
+                getTemplateId(portfolio),
                 portfolio.getIsPublic(),
                 featuredProjectName,
                 portfolio.getCreatedAt().toString(),
@@ -244,7 +242,11 @@ public class PortfolioService {
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "AUTH_005", "Unauthorized"));
     }
 
-    private PortfolioTemplate findTemplate(Long templateId) {
+    private PortfolioTemplate findTemplateIfPresent(Long templateId) {
+        if (templateId == null) {
+            return null;
+        }
+
         return portfolioTemplateRepository.findById(templateId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.BAD_REQUEST,
@@ -252,8 +254,8 @@ public class PortfolioService {
                         "templateId가 올바르지 않습니다."));
     }
 
-    private PortfolioTemplate findTemplateOrDefault(Long templateId) {
-        return findTemplate(templateId != null ? templateId : DEFAULT_TEMPLATE_ID);
+    private Long getTemplateId(Portfolio portfolio) {
+        return portfolio.getTemplate() != null ? portfolio.getTemplate().getId() : null;
     }
 
     private void checkOwner(Portfolio portfolio, Long userId) {

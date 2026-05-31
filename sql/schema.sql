@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS portfolio_templates (
 CREATE TABLE IF NOT EXISTS portfolios (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    template_id BIGINT NOT NULL,
+    template_id BIGINT,
     title VARCHAR(255) NOT NULL,
     bio TEXT NOT NULL,
     is_public BOOLEAN NOT NULL,
@@ -70,6 +70,9 @@ CREATE TABLE IF NOT EXISTS portfolio_projects (
 
 DO $$
 BEGIN
+    ALTER TABLE portfolios
+    ALTER COLUMN template_id DROP NOT NULL;
+
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'fk_portfolios_user'
     ) THEN
