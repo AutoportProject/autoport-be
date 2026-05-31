@@ -102,6 +102,11 @@ public class GeminiPortfolioService {
                 Do not invent exact numbers such as percentages, dates, review counts, response times, or performance improvements unless they are provided.
                 Return valid JSON only. Do not wrap it in markdown.
                 Do not use markdown syntax in any string value. Plain text only. Do not use **bold**, *italic*, ## headings, bullet markers, or markdown links inside JSON string values.
+                Vary sentence rhythm intentionally. Mix short and long sentences across array items.
+                Do not repeat the same ending pattern such as "\uAD6C\uD604\uD588\uC2B5\uB2C8\uB2E4" or "\uC124\uACC4\uD588\uC2B5\uB2C8\uB2E4" three or more times in a row.
+                Do not use vague adjectives such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the repository data provides concrete evidence.
+                Do not force every array to have the same number of items. Omit weak or repetitive items.
+                If User emphasis request is provided, place that topic first in technicalContributions or highlights.
 
                 JSON schema:
                 {
@@ -158,10 +163,14 @@ public class GeminiPortfolioService {
 
                 4. Main features
                 - Summarize likely user-facing or technical features from the summary, README, and highlights.
+                - Order mainFeatures by importance.
+                - Omit less important features instead of filling the list evenly.
 
                 5. Technical contribution and problem solving
                 - Turn meaningful changes into a story.
                 - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
+                - Analyze recent commit messages and reflect concrete implementation work such as feature additions, bug fixes, refactoring, documentation changes, and rendering fixes.
+                - Avoid generic contribution items. Prefer details that can be traced to commit messages, README, highlights, or repository facts.
                 - Avoid fake metrics.
 
                 6. Representative code / highlight
