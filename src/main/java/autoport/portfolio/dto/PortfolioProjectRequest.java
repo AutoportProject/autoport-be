@@ -26,5 +26,7 @@ public class PortfolioProjectRequest {
 
     private String githubUrl;
 
+    private String deployUrl;
+
     private Integer order;
 }

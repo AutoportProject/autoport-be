@@ -11,6 +11,8 @@ import lombok.Getter;
 public class PortfolioSaveResponse {
     private Long portfolioId;
     private String title;
+    private String summary;
+    private String description;
 
     @JsonProperty("isPublic")
     private boolean isPublic;

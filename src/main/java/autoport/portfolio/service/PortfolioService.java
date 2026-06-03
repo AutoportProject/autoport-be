@@ -66,6 +66,8 @@ public class PortfolioService {
                 template,
                 request.getTitle(),
                 request.getBio(),
+                request.getSummary(),
+                request.getDescription(),
                 request.getIsPublic(),
                 request.getFeaturedProjectId());
 
@@ -76,6 +78,8 @@ public class PortfolioService {
         return new PortfolioSaveResponse(
                 savedPortfolio.getId(),
                 savedPortfolio.getTitle(),
+                savedPortfolio.getSummary(),
+                savedPortfolio.getDescription(),
                 savedPortfolio.getIsPublic(),
                 savedPortfolio.getCreatedAt().toString());
     }
@@ -97,6 +101,8 @@ public class PortfolioService {
                 template,
                 request.getTitle(),
                 request.getBio(),
+                request.getSummary(),
+                request.getDescription(),
                 request.getIsPublic(),
                 request.getFeaturedProjectId());
 
@@ -106,6 +112,8 @@ public class PortfolioService {
         return new PortfolioUpdateResponse(
                 portfolio.getId(),
                 portfolio.getTitle(),
+                portfolio.getSummary(),
+                portfolio.getDescription(),
                 portfolio.getUpdatedAt().toString());
     }
 
@@ -180,6 +188,8 @@ public class PortfolioService {
                 portfolio.getId(),
                 portfolio.getTitle(),
                 portfolio.getBio(),
+                portfolio.getSummary(),
+                portfolio.getDescription(),
                 getTemplateId(portfolio),
                 portfolio.getIsPublic(),
                 portfolio.getFeaturedProjectId(),
@@ -196,6 +206,7 @@ public class PortfolioService {
                     projectRequest.getName(),
                     projectRequest.getDescription(),
                     projectRequest.getGithubUrl(),
+                    projectRequest.getDeployUrl(),
                     projectRequest.getOrder(),
                     writeJson(projectRequest.getTechStacks()),
                     writeJson(projectRequest.getHighlights()));
@@ -216,6 +227,8 @@ public class PortfolioService {
         return new PortfolioListItemResponse(
                 portfolio.getId(),
                 portfolio.getTitle(),
+                portfolio.getSummary(),
+                portfolio.getDescription(),
                 getTemplateId(portfolio),
                 portfolio.getIsPublic(),
                 featuredProjectName,
@@ -232,6 +245,7 @@ public class PortfolioService {
         setField(request, "techStacks", readStringList(project.getTechStacksJson()));
         setField(request, "highlights", readStringList(project.getHighlightsJson()));
         setField(request, "githubUrl", project.getGithubUrl());
+        setField(request, "deployUrl", project.getDeployUrl());
         setField(request, "order", project.getDisplayOrder());
 
         return request;

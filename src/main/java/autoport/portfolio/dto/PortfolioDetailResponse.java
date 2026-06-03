@@ -14,6 +14,8 @@ public class PortfolioDetailResponse {
     private Long portfolioId;
     private String title;
     private String bio;
+    private String summary;
+    private String description;
     private Long templateId;
 
     @JsonProperty("isPublic")

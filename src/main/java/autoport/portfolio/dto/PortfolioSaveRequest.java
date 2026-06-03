@@ -19,6 +19,10 @@ public class PortfolioSaveRequest {
     @NotBlank(message = "bio는 필수입니다.")
     private String bio;
 
+    private String summary;
+
+    private String description;
+
     private Long templateId;
 
     @Valid

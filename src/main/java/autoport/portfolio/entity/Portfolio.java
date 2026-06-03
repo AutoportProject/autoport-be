@@ -31,6 +31,12 @@ public class Portfolio {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String bio;
 
+    @Column(columnDefinition = "TEXT")
+    private String summary;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic;
 
@@ -48,6 +54,8 @@ public class Portfolio {
             PortfolioTemplate template,
             String title,
             String bio,
+            String summary,
+            String description,
             Boolean isPublic,
             Long featuredProjectId) {
         Portfolio portfolio = new Portfolio();
@@ -55,6 +63,8 @@ public class Portfolio {
         portfolio.template = template;
         portfolio.title = title;
         portfolio.bio = bio;
+        portfolio.summary = summary;
+        portfolio.description = description;
         portfolio.isPublic = isPublic != null && isPublic;
         portfolio.featuredProjectId = featuredProjectId;
         portfolio.createdAt = LocalDateTime.now();
@@ -66,11 +76,15 @@ public class Portfolio {
             PortfolioTemplate template,
             String title,
             String bio,
+            String summary,
+            String description,
             Boolean isPublic,
             Long featuredProjectId) {
         this.template = template;
         this.title = title;
         this.bio = bio;
+        this.summary = summary;
+        this.description = description;
         this.isPublic = isPublic != null && isPublic;
         this.featuredProjectId = featuredProjectId;
         this.updatedAt = LocalDateTime.now();

@@ -32,6 +32,9 @@ public class PortfolioProject {
     @Column(name = "github_url", columnDefinition = "TEXT")
     private String githubUrl;
 
+    @Column(name = "deploy_url", columnDefinition = "TEXT")
+    private String deployUrl;
+
     @Column(name = "display_order")
     private Integer displayOrder;
 
@@ -53,6 +56,7 @@ public class PortfolioProject {
             String name,
             String description,
             String githubUrl,
+            String deployUrl,
             Integer displayOrder,
             String techStacksJson,
             String highlightsJson) {
@@ -62,6 +66,7 @@ public class PortfolioProject {
         project.name = name;
         project.description = description;
         project.githubUrl = githubUrl;
+        project.deployUrl = deployUrl;
         project.displayOrder = displayOrder;
         project.techStacksJson = techStacksJson;
         project.highlightsJson = highlightsJson;

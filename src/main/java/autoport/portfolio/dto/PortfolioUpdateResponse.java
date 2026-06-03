@@ -8,5 +8,7 @@ import lombok.Getter;
 public class PortfolioUpdateResponse {
     private Long portfolioId;
     private String title;
+    private String summary;
+    private String description;
     private String updatedAt;
 }

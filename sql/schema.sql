@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS portfolios (
     template_id BIGINT,
     title VARCHAR(255) NOT NULL,
     bio TEXT NOT NULL,
+    summary TEXT,
+    description TEXT,
     is_public BOOLEAN NOT NULL,
     featured_project_id BIGINT,
     created_at TIMESTAMP NOT NULL,
@@ -61,6 +63,7 @@ CREATE TABLE IF NOT EXISTS portfolio_projects (
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     github_url TEXT,
+    deploy_url TEXT,
     display_order INTEGER,
     tech_stacks_json TEXT,
     highlights_json TEXT,
@@ -72,6 +75,15 @@ DO $$
 BEGIN
     ALTER TABLE portfolios
     ALTER COLUMN template_id DROP NOT NULL;
+
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS summary TEXT;
+
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS description TEXT;
+
+    ALTER TABLE portfolio_projects
+    ADD COLUMN IF NOT EXISTS deploy_url TEXT;
 
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'fk_portfolios_user'
