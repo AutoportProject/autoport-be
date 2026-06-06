@@ -1,7 +1,7 @@
 package autoport.portfolio.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,16 +11,15 @@ import java.util.List;
 @NoArgsConstructor
 public class AnalysisResultRequest {
 
-    @NotBlank(message = "projectName은 필수입니다.")
+    @NotBlank(message = "projectName is required")
+    @JsonAlias("repoName")
     private String projectName;
 
-    @NotBlank(message = "summary는 필수입니다.")
     private String summary;
 
-    @NotEmpty(message = "stacks는 최소 1개 이상이어야 합니다.")
+    @JsonAlias("techStacks")
     private List<String> stacks;
 
-    @NotEmpty(message = "highlights는 최소 1개 이상이어야 합니다.")
     private List<String> highlights;
 
     private String repoUrl;

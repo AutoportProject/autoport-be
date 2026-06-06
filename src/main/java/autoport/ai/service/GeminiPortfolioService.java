@@ -1,6 +1,7 @@
 package autoport.ai.service;
 
 import autoport.common.exception.ApiException;
+import autoport.github.dto.AiInputData;
 import autoport.portfolio.dto.AnalysisResultRequest;
 import autoport.portfolio.dto.PortfolioGenerateRequest;
 import autoport.portfolio.dto.PortfolioGenerateResponse;
@@ -40,6 +41,36 @@ public class GeminiPortfolioService {
 
     public boolean isConfigured() {
         return apiKey != null && !apiKey.isBlank();
+    }
+
+    public RepositoryAnalysisSummary summarizeRepository(AiInputData analysis) {
+        if (!isConfigured()) {
+            return null;
+        }
+
+        try {
+            Map<String, Object> body = Map.of(
+                    "contents", List.of(Map.of(
+                            "role", "user",
+                            "parts", List.of(Map.of("text", buildRepositoryAnalysisPrompt(analysis))))),
+                    "generationConfig", Map.of(
+                            "temperature", 0.4,
+                            "responseMimeType", "application/json"));
+
+            String responseBody = restClient.post()
+                    .uri("/models/{model}:generateContent", model)
+                    .header("x-goog-api-key", apiKey)
+                    .body(body)
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode response = objectMapper.readTree(responseBody);
+            String generatedText = extractText(response);
+            return parseRepositoryAnalysisSummary(generatedText);
+        } catch (Exception e) {
+            log.warn("Failed to summarize repository analysis with Gemini", e);
+            return null;
+        }
     }
 
     public PortfolioGenerateResponse generate(PortfolioGenerateRequest request) {
@@ -271,10 +302,78 @@ public class GeminiPortfolioService {
                 blankToEmpty(analysis.getLatestCommitAt()),
                 blankToEmpty(analysis.getDevelopmentPeriod()),
                 listToText(analysis.getRecentCommitMessages()),
+                blankToEmpty(analysis.getProjectName()),
+                firstNonBlank(analysis.getSummary(), analysis.getReadmeSummary(), analysis.getDescription()),
+                listToText(analysis.getStacks()),
+                listToText(analysis.getHighlights()));
+    }
+
+    private String buildRepositoryAnalysisPrompt(AiInputData analysis) {
+        return """
+                You are an expert AI assistant that summarizes GitHub repository analysis for a developer portfolio service.
+                Write in Korean. Return valid JSON only. Do not wrap it in markdown.
+                Never include text outside the JSON object.
+                Do not use markdown syntax in string values.
+                Do not invent exact metrics, dates, deployment URLs, or performance improvements.
+                Use only the provided repository facts.
+
+                JSON schema:
+                {
+                  "readmeSummary": "string",
+                  "activitySummary": "string",
+                  "highlights": ["string"]
+                }
+
+                Requirements:
+                - readmeSummary should be 2-3 concise Korean sentences.
+                - readmeSummary must explain the project purpose, target users, and core flow when the README supports them.
+                - Do not copy the README as a long list.
+                - activitySummary should be one natural Korean sentence based on commits, stars, forks, open issues, and recent commit messages.
+                - highlights should contain 3-5 short portfolio-worthy points.
+                - Keep every field readable in a card UI.
+                - Avoid vague praise such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the data supports it.
+                - If README information is sparse, say what is known from repository description, languages, and recent commits.
+
+                Repository facts:
+                Project name: %s
+                Repo URL: %s
+                Description: %s
+                Main language: %s
+                Tech stacks: %s
+                README content: %s
+                Activity summary: %s
+                Stars: %s
+                Forks: %s
+                Open issues: %s
+                Commit count: %s
+                Importance score: %s
+                Repository created at: %s
+                Repository updated at: %s
+                First commit at: %s
+                Latest commit at: %s
+                Development period: %s
+                Recent commit messages: %s
+                Current highlights: %s
+                """.formatted(
                 analysis.getProjectName(),
-                analysis.getSummary(),
+                blankToEmpty(analysis.getRepoUrl()),
+                blankToEmpty(analysis.getDescription()),
+                blankToEmpty(analysis.getMainLanguage()),
                 analysis.getStacks(),
-                analysis.getHighlights());
+                blankToEmpty(analysis.getReadmeSummary()),
+                blankToEmpty(analysis.getActivitySummary()),
+                numberToText(analysis.getStarCount()),
+                numberToText(analysis.getForkCount()),
+                numberToText(analysis.getOpenIssuesCount()),
+                numberToText(analysis.getCommitCount()),
+                numberToText(analysis.getImportanceScore()),
+                blankToEmpty(analysis.getRepositoryCreatedAt()),
+                blankToEmpty(analysis.getRepositoryUpdatedAt()),
+                blankToEmpty(analysis.getFirstCommitAt()),
+                blankToEmpty(analysis.getLatestCommitAt()),
+                blankToEmpty(analysis.getDevelopmentPeriod()),
+                listToText(analysis.getRecentCommitMessages()),
+                listToText(analysis.getHighlights()));
     }
 
     private String extractText(JsonNode response) {
@@ -338,6 +437,28 @@ public class GeminiPortfolioService {
         }
     }
 
+    private RepositoryAnalysisSummary parseRepositoryAnalysisSummary(String generatedText) {
+        try {
+            return objectMapper.readValue(generatedText, RepositoryAnalysisSummary.class);
+        } catch (Exception e) {
+            try {
+                Map<String, Object> value = objectMapper.readValue(generatedText, new TypeReference<>() {
+                });
+                List<String> highlights = objectMapper.convertValue(
+                        value.getOrDefault("highlights", List.of()),
+                        new TypeReference<>() {
+                        });
+
+                return new RepositoryAnalysisSummary(
+                        String.valueOf(value.getOrDefault("readmeSummary", "")),
+                        String.valueOf(value.getOrDefault("activitySummary", "")),
+                        highlights);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+    }
+
     private String stripMarkdownFence(String text) {
         String trimmed = text.trim();
         if (trimmed.startsWith("```json")) {
@@ -357,6 +478,18 @@ public class GeminiPortfolioService {
         return value == null || value.isBlank() ? defaultValue : value;
     }
 
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
+    }
+
     private String numberToText(Integer value) {
         return value == null ? "" : value.toString();
     }
@@ -374,5 +507,11 @@ public class GeminiPortfolioService {
             return normalized;
         }
         return normalized.substring(0, 300) + "...";
+    }
+
+    public record RepositoryAnalysisSummary(
+            String readmeSummary,
+            String activitySummary,
+            List<String> highlights) {
     }
 }

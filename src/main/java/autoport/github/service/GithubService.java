@@ -1,5 +1,6 @@
 package autoport.github.service;
 
+import autoport.ai.service.GeminiPortfolioService;
 import autoport.common.exception.ApiException;
 import autoport.config.UserPrincipal;
 import autoport.github.dto.AiInputData;
@@ -39,6 +40,8 @@ public class GithubService {
     private static final int COMMIT_COUNT_PER_PAGE = 100;
     private static final int README_AI_CONTEXT_LIMIT = 2000;
     private static final Pattern PAGE_QUERY_PATTERN = Pattern.compile("[?&]page=(\\d+)");
+
+    private final GeminiPortfolioService geminiPortfolioService;
 
     private final RestClient restClient = RestClient.builder()
             .baseUrl(GITHUB_API_BASE_URL)
@@ -107,9 +110,44 @@ public class GithubService {
         CommitActivity commitActivity = fetchCommitActivity(user.getGithubAccessToken(), owner, repoName, commitCount);
         int importanceScore = calculateImportanceScore(starCount, forkCount, commitCount, languages.size(), hasText(readme));
 
-        List<String> highlights = buildHighlights(repo, languages, commitCount, readme);
-        String readmeSummary = summarizeReadme(readme, description);
-        String activitySummary = buildActivitySummary(commitCount, starCount, forkCount, openIssuesCount);
+        List<String> defaultHighlights = buildHighlights(repo, languages, commitCount, readme);
+        String defaultReadmeSummary = summarizeReadme(readme, description);
+        String defaultActivitySummary = buildActivitySummary(commitCount, starCount, forkCount, openIssuesCount);
+
+        AiInputData rawAiInputData = new AiInputData(
+                repoName,
+                buildAiSummary(repoName, description, defaultReadmeSummary, defaultActivitySummary),
+                languages.isEmpty() ? List.of(defaultString(mainLanguage, "Unknown")) : languages,
+                defaultHighlights,
+                repo.path("html_url").asText(null),
+                description,
+                mainLanguage,
+                defaultReadmeSummary,
+                defaultActivitySummary,
+                starCount,
+                forkCount,
+                openIssuesCount,
+                commitCount,
+                importanceScore,
+                repo.path("created_at").asText(null),
+                repo.path("updated_at").asText(null),
+                commitActivity.firstCommitAt(),
+                commitActivity.latestCommitAt(),
+                buildDevelopmentPeriod(commitActivity.firstCommitAt(), commitActivity.latestCommitAt()),
+                commitActivity.recentMessages());
+
+        GeminiPortfolioService.RepositoryAnalysisSummary aiSummary =
+                geminiPortfolioService.summarizeRepository(rawAiInputData);
+
+        String readmeSummary = aiSummary != null && hasText(aiSummary.readmeSummary())
+                ? aiSummary.readmeSummary()
+                : defaultReadmeSummary;
+        String activitySummary = aiSummary != null && hasText(aiSummary.activitySummary())
+                ? aiSummary.activitySummary()
+                : defaultActivitySummary;
+        List<String> highlights = aiSummary != null && aiSummary.highlights() != null && !aiSummary.highlights().isEmpty()
+                ? aiSummary.highlights()
+                : defaultHighlights;
 
         AiInputData aiInputData = new AiInputData(
                 repoName,
