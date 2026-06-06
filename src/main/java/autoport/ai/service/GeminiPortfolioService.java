@@ -45,6 +45,7 @@ public class GeminiPortfolioService {
 
     public RepositoryAnalysisSummary summarizeRepository(AiInputData analysis) {
         if (!isConfigured()) {
+            log.warn("Gemini repository analysis skipped because GEMINI_API_KEY is blank");
             return null;
         }
 
@@ -67,8 +68,19 @@ public class GeminiPortfolioService {
             JsonNode response = objectMapper.readTree(responseBody);
             String generatedText = extractText(response);
             return parseRepositoryAnalysisSummary(generatedText);
+        } catch (RestClientResponseException e) {
+            log.warn(
+                    "Gemini repository analysis request failed. status={}, body={}",
+                    e.getStatusCode(),
+                    abbreviate(e.getResponseBodyAsString()),
+                    e);
+            return null;
         } catch (Exception e) {
-            log.warn("Failed to summarize repository analysis with Gemini", e);
+            log.warn(
+                    "Failed to summarize repository analysis with Gemini. cause={} message={}",
+                    e.getClass().getSimpleName(),
+                    abbreviate(e.getMessage()),
+                    e);
             return null;
         }
     }

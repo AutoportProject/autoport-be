@@ -12,7 +12,7 @@ public class PortfolioGenerateRequest {
 
     @Valid
     @NotNull(message = "analysisResult is required")
-    @JsonAlias({"aiInputData", "repositoryAnalysis", "githubAnalysis"})
+    @JsonAlias({"aiInputData", "repositoryAnalysis", "githubAnalysis", "data"})
     private AnalysisResultRequest analysisResult;
 
     private Long templateId;
