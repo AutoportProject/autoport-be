@@ -39,6 +39,7 @@ public class GithubService {
     private static final String GITHUB_API_BASE_URL = "https://api.github.com";
     private static final int COMMIT_COUNT_PER_PAGE = 100;
     private static final int README_AI_CONTEXT_LIMIT = 2000;
+    private static final int README_FALLBACK_SUMMARY_LIMIT = 220;
     private static final Pattern PAGE_QUERY_PATTERN = Pattern.compile("[?&]page=(\\d+)");
 
     private final GeminiPortfolioService geminiPortfolioService;
@@ -112,17 +113,18 @@ public class GithubService {
 
         List<String> defaultHighlights = buildHighlights(repo, languages, commitCount, readme);
         String defaultReadmeSummary = summarizeReadme(readme, description);
+        String readmeContext = buildReadmeContext(readme, description);
         String defaultActivitySummary = buildActivitySummary(commitCount, starCount, forkCount, openIssuesCount);
 
         AiInputData rawAiInputData = new AiInputData(
                 repoName,
-                buildAiSummary(repoName, description, defaultReadmeSummary, defaultActivitySummary),
+                buildAiSummary(repoName, description, readmeContext, defaultActivitySummary),
                 languages.isEmpty() ? List.of(defaultString(mainLanguage, "Unknown")) : languages,
                 defaultHighlights,
                 repo.path("html_url").asText(null),
                 description,
                 mainLanguage,
-                defaultReadmeSummary,
+                readmeContext,
                 defaultActivitySummary,
                 starCount,
                 forkCount,
@@ -630,39 +632,74 @@ public class GithubService {
     private List<String> buildHighlights(JsonNode repo, List<String> languages, int commitCount, String readme) {
         List<String> highlights = new ArrayList<>();
         if (!languages.isEmpty()) {
-            highlights.add("\uC8FC\uC694 \uAE30\uC220 \uC2A4\uD0DD: " + String.join(", ", languages));
+            highlights.add("주요 언어: " + abbreviate(String.join(", ", languages), 45));
         }
         if (hasText(repo.path("description").asText(null))) {
-            highlights.add("\uD504\uB85C\uC81D\uD2B8 \uC124\uBA85 \uAE30\uBC18 \uD575\uC2EC \uC8FC\uC81C: " + repo.path("description").asText());
+            highlights.add("프로젝트 주제: " + abbreviate(repo.path("description").asText(), 45));
         }
         if (hasText(readme)) {
-            highlights.add("README \uBB38\uC11C\uB97C \uAE30\uBC18\uC73C\uB85C \uD504\uB85C\uC81D\uD2B8 \uBAA9\uC801\uACFC \uC0AC\uC6A9 \uD750\uB984 \uD655\uC778 \uAC00\uB2A5");
+            highlights.add("README 기반 프로젝트 흐름 분석");
         }
-        highlights.add("\uCD5C\uADFC \uCEE4\uBC0B \uC218 \uAE30\uC900 \uD65C\uB3D9\uB7C9: " + commitCount + "\uAC1C");
+        highlights.add("커밋 " + commitCount + "개 기준 활동 분석");
         if (repo.path("private").asBoolean(false)) {
-            highlights.add("\uBE44\uACF5\uAC1C \uC800\uC7A5\uC18C \uBD84\uC11D");
+            highlights.add("비공개 저장소 분석");
         }
         return highlights;
     }
+
     private String summarizeReadme(String readme, String description) {
         if (hasText(readme)) {
-            String normalized = readme
-                    .replaceAll("(?m)^#{1,6}\\s*", "")
-                    .replaceAll("(?s)```.*?```", " ")
-                    .replaceAll("!\\[[^]]*]\\([^)]*\\)", " ")
-                    .replaceAll("\\[([^]]+)]\\([^)]*\\)", "$1")
-                    .replaceAll("(?m)^[-*+]\\s+", "")
-                    .replaceAll("\\s+", " ")
-                    .trim();
-            if (normalized.length() > README_AI_CONTEXT_LIMIT) {
-                return normalized.substring(0, README_AI_CONTEXT_LIMIT) + "...";
-            }
-            return normalized;
+            return abbreviate(toReadableReadmeSummary(cleanReadme(readme)), README_FALLBACK_SUMMARY_LIMIT);
         }
         if (hasText(description)) {
-            return description;
+            return abbreviate(description, README_FALLBACK_SUMMARY_LIMIT);
         }
         return "README \uB610\uB294 repository description\uC774 \uC5C6\uC5B4 \uC694\uC57D \uC815\uBCF4\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4.";
+    }
+
+    private String buildReadmeContext(String readme, String description) {
+        if (hasText(readme)) {
+            return abbreviate(cleanReadme(readme), README_AI_CONTEXT_LIMIT);
+        }
+        return defaultString(description, "");
+    }
+
+    private String cleanReadme(String readme) {
+        return readme
+                .replaceAll("(?s)```.*?```", " ")
+                .replaceAll("!\\[[^]]*]\\([^)]*\\)", " ")
+                .replaceAll("\\[([^]]+)]\\([^)]*\\)", "$1")
+                .replaceAll("(?m)^#{1,6}\\s*", "")
+                .replaceAll("(?m)^[-*+]\\s+", "")
+                .replaceAll("(?m)^\\s*[-=]{3,}\\s*$", " ")
+                .replaceAll("(?i)https?://\\S+", " ")
+                .replaceAll("/[A-Za-z0-9_./{}:-]+", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private String toReadableReadmeSummary(String normalized) {
+        if (!hasText(normalized)) {
+            return "";
+        }
+
+        String[] stopWords = {
+                "주요 기능", "기술 스택", "Tech Stack", "프로젝트 구조", "시작하기",
+                "설치", "환경변수", "API", "Swagger", "Endpoint", "Requirements"
+        };
+        int end = normalized.length();
+        for (String stopWord : stopWords) {
+            int index = normalized.indexOf(stopWord);
+            if (index > 30) {
+                end = Math.min(end, index);
+            }
+        }
+
+        String candidate = normalized.substring(0, end)
+                .replaceAll("\\s*-\\s*", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
+        return hasText(candidate) ? candidate : normalized;
     }
 
     private String buildActivitySummary(int commits, int stars, int forks, int openIssues) {
@@ -705,6 +742,13 @@ public class GithubService {
 
     private String defaultString(String value, String defaultValue) {
         return hasText(value) ? value : defaultValue;
+    }
+
+    private String abbreviate(String value, int maxLength) {
+        if (!hasText(value) || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, Math.max(0, maxLength - 3)).trim() + "...";
     }
 
     private ApiException githubApiException(RestClientResponseException e, String message) {

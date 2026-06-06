@@ -281,7 +281,7 @@ public class GeminiPortfolioService {
                 Tech stacks: %s
                 Highlights: %s
                 """.formatted(
-                request.getUserName(),
+                blankToDefault(request.getUserName(), "사용자"),
                 blankToEmpty(request.getBio()),
                 blankToDefault(request.getTone(), "professional"),
                 blankToEmpty(request.getEmphasis()),
@@ -325,12 +325,14 @@ public class GeminiPortfolioService {
                 }
 
                 Requirements:
-                - readmeSummary should be 2-3 concise Korean sentences.
-                - readmeSummary must explain the project purpose, target users, and core flow when the README supports them.
-                - Do not copy the README as a long list.
-                - activitySummary should be one natural Korean sentence based on commits, stars, forks, open issues, and recent commit messages.
-                - highlights should contain 3-5 short portfolio-worthy points.
-                - Keep every field readable in a card UI.
+                - readmeSummary must be 2 short Korean sentences, 180 Korean characters or fewer in total.
+                - readmeSummary must explain what the project is and its main user-facing or API flow.
+                - Do not copy README lists, API paths, endpoint names, dependency names, environment setup, Swagger routes, or command snippets.
+                - Do not include raw URL paths such as "/api/..." or file names unless they are essential.
+                - activitySummary must be one natural Korean sentence, 90 Korean characters or fewer.
+                - highlights must contain 3-4 short portfolio-worthy points, each 45 Korean characters or fewer.
+                - Keep every field readable in a compact card UI.
+                - Prefer plain product/engineering descriptions over exhaustive feature lists.
                 - Avoid vague praise such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the data supports it.
                 - If README information is sparse, say what is known from repository description, languages, and recent commits.
 
