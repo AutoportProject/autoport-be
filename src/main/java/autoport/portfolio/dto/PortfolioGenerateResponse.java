@@ -12,6 +12,8 @@ import java.util.List;
 public class PortfolioGenerateResponse {
     private String portfolioTitle;
     private String introduction;
+    private String summary;
+    private String description;
     private List<PortfolioProjectResponse> projects;
     private List<String> technicalContributions;
     private List<String> codeHighlights;

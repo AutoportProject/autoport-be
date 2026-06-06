@@ -70,6 +70,8 @@ public class GeminiPortfolioService {
             return new PortfolioGenerateResponse(
                     generated.getPortfolioTitle(),
                     generated.getIntroduction(),
+                    generated.getSummary(),
+                    generated.getDescription(),
                     generated.getProjects(),
                     generated.getTechnicalContributions(),
                     generated.getCodeHighlights(),
@@ -118,6 +120,8 @@ public class GeminiPortfolioService {
                 {
                   "portfolioTitle": "string",
                   "introduction": "string",
+                  "summary": "string",
+                  "description": "string",
                   "projects": [
                     {
                       "name": "string",
@@ -154,6 +158,18 @@ public class GeminiPortfolioService {
                 - Do not introduce the user as an expert unless the input data strongly supports it.
                 - Base the introduction on what was implemented, improved, designed, or analyzed in the repository.
                 - Avoid broad claims that are not supported by the repository data.
+
+                Summary
+                - Create a new top-level summary for portfolio cards and My Page lists.
+                - Do not copy introduction exactly.
+                - Keep it to one concise Korean sentence under 80 Korean characters when possible.
+                - Summarize the strongest project identity or contribution area.
+
+                Description
+                - Create a new top-level description for portfolio detail previews.
+                - Do not copy introduction exactly.
+                - Write 1-2 Korean sentences that explain the overall portfolio theme, representative project, and practical value.
+                - Keep it shorter and more scannable than introduction.
 
                 2. Project detail
                 - Include project name, one-line summary, development period, and the user's role.
@@ -215,7 +231,7 @@ public class GeminiPortfolioService {
                 Repo URL: %s
                 Description: %s
                 Main language: %s
-                README summary: %s
+                README content for AI summary: %s
                 Activity summary: %s
                 Stars: %s
                 Forks: %s
@@ -287,6 +303,8 @@ public class GeminiPortfolioService {
 
                 String title = String.valueOf(value.getOrDefault("portfolioTitle", "Developer Portfolio"));
                 String introduction = String.valueOf(value.getOrDefault("introduction", ""));
+                String summary = String.valueOf(value.getOrDefault("summary", ""));
+                String description = String.valueOf(value.getOrDefault("description", ""));
                 List<PortfolioProjectResponse> projects = objectMapper.convertValue(
                         value.getOrDefault("projects", List.of()),
                         new TypeReference<>() {
@@ -307,6 +325,8 @@ public class GeminiPortfolioService {
                 return new PortfolioGenerateResponse(
                         title,
                         introduction,
+                        summary,
+                        description,
                         projects,
                         technicalContributions,
                         codeHighlights,

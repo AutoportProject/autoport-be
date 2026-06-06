@@ -23,10 +23,13 @@ import org.springframework.web.client.RestClientResponseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.StreamSupport;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,8 @@ public class GithubService {
 
     private static final String GITHUB_API_BASE_URL = "https://api.github.com";
     private static final int COMMIT_COUNT_PER_PAGE = 100;
+    private static final int README_AI_CONTEXT_LIMIT = 2000;
+    private static final Pattern PAGE_QUERY_PATTERN = Pattern.compile("[?&]page=(\\d+)");
 
     private final RestClient restClient = RestClient.builder()
             .baseUrl(GITHUB_API_BASE_URL)
@@ -58,14 +63,18 @@ public class GithubService {
                 directionValue,
                 currentPage,
                 currentPerPage);
+        List<GithubRepoResponse> content = includeContributedRepos(
+                user.getGithubAccessToken(),
+                user.getGithubLogin(),
+                repos.content());
 
-        int totalElements = repos.totalElements();
+        int totalElements = Math.max(repos.totalElements(), content.size());
         int totalPages = totalElements == 0
-                ? (repos.content().isEmpty() ? 0 : currentPage)
+                ? (content.isEmpty() ? 0 : currentPage)
                 : (int) Math.ceil((double) totalElements / currentPerPage);
 
         return new GithubRepoListResponse(
-                repos.content(),
+                content,
                 currentPage,
                 currentPerPage,
                 totalElements,
@@ -190,6 +199,134 @@ public class GithubService {
         }
     }
 
+    private List<GithubRepoResponse> includeContributedRepos(
+            String accessToken,
+            String githubLogin,
+            List<GithubRepoResponse> repos) {
+        if (!hasText(githubLogin)) {
+            return repos;
+        }
+
+        Map<String, GithubRepoResponse> merged = new LinkedHashMap<>();
+        for (GithubRepoResponse repo : repos) {
+            if (hasText(repo.getFullName())) {
+                merged.put(repo.getFullName(), repo);
+            }
+        }
+
+        for (String fullName : fetchContributedRepoFullNames(accessToken, githubLogin)) {
+            if (!hasText(fullName) || merged.containsKey(fullName)) {
+                continue;
+            }
+
+            GithubRepoResponse repo = fetchRepoResponseByFullName(accessToken, fullName);
+            if (repo != null && hasText(repo.getFullName())) {
+                merged.put(repo.getFullName(), repo);
+            }
+        }
+
+        return new ArrayList<>(merged.values());
+    }
+
+    private List<String> fetchContributedRepoFullNames(String accessToken, String githubLogin) {
+        LinkedHashMap<String, Boolean> fullNames = new LinkedHashMap<>();
+        addCommitSearchRepoNames(accessToken, githubLogin, fullNames);
+        addPullRequestSearchRepoNames(accessToken, githubLogin, fullNames);
+        return new ArrayList<>(fullNames.keySet());
+    }
+
+    private void addCommitSearchRepoNames(
+            String accessToken,
+            String githubLogin,
+            Map<String, Boolean> fullNames) {
+        try {
+            String body = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/search/commits")
+                            .queryParam("q", "author:" + githubLogin)
+                            .queryParam("sort", "committer-date")
+                            .queryParam("order", "desc")
+                            .queryParam("per_page", 100)
+                            .build())
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode items = objectMapper.readTree(body).path("items");
+            if (items.isArray()) {
+                for (JsonNode item : items) {
+                    String fullName = item.path("repository").path("full_name").asText(null);
+                    if (hasText(fullName)) {
+                        fullNames.put(fullName, true);
+                    }
+                }
+            }
+        } catch (RestClientResponseException ignored) {
+            // Repository ownership/collaborator listing should still work if search is unavailable.
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void addPullRequestSearchRepoNames(
+            String accessToken,
+            String githubLogin,
+            Map<String, Boolean> fullNames) {
+        try {
+            String body = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/search/issues")
+                            .queryParam("q", "type:pr author:" + githubLogin)
+                            .queryParam("sort", "updated")
+                            .queryParam("order", "desc")
+                            .queryParam("per_page", 100)
+                            .build())
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode items = objectMapper.readTree(body).path("items");
+            if (items.isArray()) {
+                for (JsonNode item : items) {
+                    String repositoryUrl = item.path("repository_url").asText(null);
+                    String fullName = repositoryFullNameFromApiUrl(repositoryUrl);
+                    if (hasText(fullName)) {
+                        fullNames.put(fullName, true);
+                    }
+                }
+            }
+        } catch (RestClientResponseException ignored) {
+            // Repository ownership/collaborator listing should still work if search is unavailable.
+        } catch (Exception ignored) {
+        }
+    }
+
+    private GithubRepoResponse fetchRepoResponseByFullName(String accessToken, String fullName) {
+        String[] parts = fullName.split("/", 2);
+        if (parts.length != 2) {
+            return null;
+        }
+
+        try {
+            JsonNode repo = fetchRepo(accessToken, parts[0], parts[1]);
+            return toRepoResponse(repo);
+        } catch (ApiException ignored) {
+            return null;
+        }
+    }
+
+    private String repositoryFullNameFromApiUrl(String repositoryUrl) {
+        if (!hasText(repositoryUrl)) {
+            return null;
+        }
+
+        String prefix = GITHUB_API_BASE_URL + "/repos/";
+        if (!repositoryUrl.startsWith(prefix)) {
+            return null;
+        }
+
+        return repositoryUrl.substring(prefix.length());
+    }
+
     private JsonNode fetchRepo(String accessToken, String owner, String repoName) {
         try {
             String body = restClient.get()
@@ -256,19 +393,60 @@ public class GithubService {
 
             JsonNode commits = objectMapper.readTree(response.getBody());
             int currentPageCount = commits.isArray() ? commits.size() : 0;
+            Integer lastPage = parseLastPage(response.getHeaders().getFirst("Link"));
+            int totalElements = calculateCommitTotalElements(
+                    accessToken,
+                    owner,
+                    repoName,
+                    lastPage,
+                    currentPageCount);
+
             return new GithubPage<>(
                     currentPageCount,
-                    parseTotalElements(
-                            response.getHeaders().getFirst("Link"),
-                            1,
-                            COMMIT_COUNT_PER_PAGE,
-                            currentPageCount));
+                    totalElements);
         } catch (HttpClientErrorException.Conflict e) {
             return new GithubPage<>(0, 0);
         } catch (RestClientResponseException e) {
             throw githubApiException(e, "Failed to fetch repository commits");
         } catch (Exception e) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        }
+    }
+
+    private int calculateCommitTotalElements(
+            String accessToken,
+            String owner,
+            String repoName,
+            Integer lastPage,
+            int firstPageCount) {
+        if (lastPage == null || lastPage <= 1) {
+            return firstPageCount;
+        }
+
+        int lastPageCount = fetchCommitPageCount(accessToken, owner, repoName, lastPage);
+        if (lastPageCount <= 0) {
+            return (lastPage - 1) * COMMIT_COUNT_PER_PAGE + firstPageCount;
+        }
+
+        return (lastPage - 1) * COMMIT_COUNT_PER_PAGE + lastPageCount;
+    }
+
+    private int fetchCommitPageCount(String accessToken, String owner, String repoName, int page) {
+        try {
+            String body = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/repos/{owner}/{repo}/commits")
+                            .queryParam("per_page", COMMIT_COUNT_PER_PAGE)
+                            .queryParam("page", page)
+                            .build(owner, repoName))
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode commits = objectMapper.readTree(body);
+            return commits.isArray() ? commits.size() : 0;
+        } catch (Exception e) {
+            return 0;
         }
     }
 
@@ -320,11 +498,12 @@ public class GithubService {
         }
 
         try {
+            int lastPage = (int) Math.ceil((double) commitCount / COMMIT_COUNT_PER_PAGE);
             String body = restClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/repos/{owner}/{repo}/commits")
-                            .queryParam("per_page", 1)
-                            .queryParam("page", commitCount)
+                            .queryParam("per_page", COMMIT_COUNT_PER_PAGE)
+                            .queryParam("page", lastPage)
                             .build(owner, repoName))
                     .headers(headers -> headers.setBearerAuth(accessToken))
                     .retrieve()
@@ -332,7 +511,7 @@ public class GithubService {
 
             JsonNode commits = objectMapper.readTree(body);
             if (commits.isArray() && !commits.isEmpty()) {
-                return commits.get(0).path("commit").path("author").path("date").asText(fallbackDate);
+                return commits.get(commits.size() - 1).path("commit").path("author").path("date").asText(fallbackDate);
             }
             return fallbackDate;
         } catch (HttpClientErrorException.Conflict e) {
@@ -386,19 +565,13 @@ public class GithubService {
             if (!link.contains("rel=\"last\"")) {
                 continue;
             }
-            int pageIndex = link.indexOf("page=");
-            if (pageIndex < 0) {
-                return null;
+            Matcher matcher = PAGE_QUERY_PATTERN.matcher(link);
+            Integer page = null;
+            while (matcher.find()) {
+                page = Integer.parseInt(matcher.group(1));
             }
-            int start = pageIndex + 5;
-            int end = start;
-            while (end < link.length() && Character.isDigit(link.charAt(end))) {
-                end++;
-            }
-            try {
-                return Integer.parseInt(link.substring(start, end));
-            } catch (NumberFormatException ignored) {
-                return null;
+            if (page != null) {
+                return page;
             }
         }
         return null;
@@ -438,10 +611,13 @@ public class GithubService {
             String normalized = readme
                     .replaceAll("(?m)^#{1,6}\\s*", "")
                     .replaceAll("(?s)```.*?```", " ")
+                    .replaceAll("!\\[[^]]*]\\([^)]*\\)", " ")
+                    .replaceAll("\\[([^]]+)]\\([^)]*\\)", "$1")
+                    .replaceAll("(?m)^[-*+]\\s+", "")
                     .replaceAll("\\s+", " ")
                     .trim();
-            if (normalized.length() > 500) {
-                return normalized.substring(0, 500) + "...";
+            if (normalized.length() > README_AI_CONTEXT_LIMIT) {
+                return normalized.substring(0, README_AI_CONTEXT_LIMIT) + "...";
             }
             return normalized;
         }
