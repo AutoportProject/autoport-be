@@ -38,4 +38,7 @@ public class AnalysisResultRequest {
     private String latestCommitAt;
     private String developmentPeriod;
     private List<String> recentCommitMessages;
+    private String contributorLogin;
+    private Integer userCommitCount;
+    private List<String> userRecentCommitMessages;
 }

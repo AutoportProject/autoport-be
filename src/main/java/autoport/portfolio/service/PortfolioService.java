@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.lang.reflect.Field;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class PortfolioService {
@@ -66,8 +67,8 @@ public class PortfolioService {
                 template,
                 request.getTitle(),
                 request.getBio(),
-                request.getSummary(),
-                request.getDescription(),
+                resolveSummary(request),
+                resolveDescription(request),
                 writeJson(request.getTechnicalContributions()),
                 writeJson(request.getCodeHighlights()),
                 writeJson(request.getProjectLinks()),
@@ -105,8 +106,8 @@ public class PortfolioService {
                 template,
                 request.getTitle(),
                 request.getBio(),
-                request.getSummary(),
-                request.getDescription(),
+                resolveSummary(request),
+                resolveDescription(request),
                 writeJson(request.getTechnicalContributions()),
                 writeJson(request.getCodeHighlights()),
                 writeJson(request.getProjectLinks()),
@@ -229,6 +230,63 @@ public class PortfolioService {
 
             portfolioProjectRepository.save(project);
         }
+    }
+
+    private String resolveSummary(PortfolioSaveRequest request) {
+        if (hasText(request.getSummary())) {
+            return request.getSummary().trim();
+        }
+
+        PortfolioProjectRequest firstProject = firstProject(request);
+        if (firstProject != null && hasText(firstProject.getName())) {
+            return abbreviate(firstProject.getName().trim() + " 기반 포트폴리오", 80);
+        }
+
+        return abbreviate(request.getTitle(), 80);
+    }
+
+    private String resolveDescription(PortfolioSaveRequest request) {
+        if (hasText(request.getDescription())) {
+            return request.getDescription().trim();
+        }
+
+        if (hasText(request.getBio())) {
+            return abbreviate(request.getBio(), 180);
+        }
+
+        PortfolioProjectRequest firstProject = firstProject(request);
+        if (firstProject != null && hasText(firstProject.getDescription())) {
+            return abbreviate(firstProject.getDescription(), 180);
+        }
+
+        return abbreviate(request.getTitle(), 180);
+    }
+
+    private PortfolioProjectRequest firstProject(PortfolioSaveRequest request) {
+        if (request.getProjects() == null || request.getProjects().isEmpty()) {
+            return null;
+        }
+        return request.getProjects().stream()
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    private String abbreviate(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = value.trim();
+        if (normalized.length() <= maxLength) {
+            return normalized;
+        }
+
+        return normalized.substring(0, Math.max(0, maxLength - 3)).trim() + "...";
     }
 
     private PortfolioListItemResponse toListItem(Portfolio portfolio) {

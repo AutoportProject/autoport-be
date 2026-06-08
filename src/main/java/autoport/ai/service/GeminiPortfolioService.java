@@ -154,6 +154,9 @@ public class GeminiPortfolioService {
                 Do not use vague adjectives such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the repository data provides concrete evidence.
                 Do not force every array to have the same number of items. Omit weak or repetitive items.
                 If User emphasis request is provided, place that topic first in technicalContributions or highlights.
+                Attribute work to the user only when it is supported by User-authored commit data, User recent commit messages, User emphasis request, or explicit user-provided bio.
+                Repository-wide README, highlights, and recent commit messages describe the project, but they do not prove the user personally implemented every item.
+                If User-authored commit data is empty or sparse, avoid claiming ownership of specific features. Use neutral phrasing such as "\uD504\uB85C\uC81D\uD2B8\uC5D0\uC11C \uB2E4\uB8EC \uAD6C\uD604 \uBC94\uC704" or "\uD655\uC778\uB41C \uAE30\uC5EC \uC815\uBCF4\uB294 \uC81C\uD55C\uC801\uC785\uB2C8\uB2E4".
                 Keep field responsibilities separate: description explains what the project is, mainFeatures explains what it does for users, technicalContributions explains how it was implemented, and codeHighlights explains why a specific implementation matters.
                 If Importance score is 5 or lower, keep the output brief and focus mainly on highlights.
                 Write the introduction without a subject or in first person. Avoid third-person expressions like "\uC815\uBBFC\uC11C\uB294", "\uAC1C\uBC1C\uC790\uB294", or "\uC815\uBBFC\uC11C \uAC1C\uBC1C\uC790\uB294".
@@ -222,7 +225,7 @@ public class GeminiPortfolioService {
                 - Development period is calculated from the entire repository commit history, not from one user's personal commits.
                 - If Development period is empty, write "\uAC1C\uBC1C \uAE30\uAC04 \uC815\uBCF4 \uC5C6\uC74C".
                 - For role: if the repository appears to be a solo repository, write "\uD480\uC2A4\uD0DD \uAC1C\uBC1C\uC790 (1\uC778 \uAC1C\uBC1C)".
-                - For role: if the repository appears collaborative, infer the role from commit share, contribution areas, changed files, commit messages, and repository analysis.
+                - For role: if the repository appears collaborative, infer the role primarily from User-authored commit count and User recent commit messages. Use repository-wide commit messages only as project context.
                 - For role: if the role cannot be inferred, write "\uC5ED\uD560 \uC815\uBCF4 \uC5C6\uC74C".
 
                 3. Tech stack
@@ -239,7 +242,8 @@ public class GeminiPortfolioService {
                 - Turn meaningful changes into a story.
                 - technicalContributions should describe how the project was implemented or improved.
                 - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
-                - Analyze recent commit messages and reflect concrete implementation work such as feature additions, bug fixes, refactoring, documentation changes, and rendering fixes.
+                - Analyze User recent commit messages first and reflect concrete implementation work such as feature additions, bug fixes, refactoring, documentation changes, and rendering fixes.
+                - Do not turn repository-wide recent commit messages into the user's personal contribution unless the same work appears in User recent commit messages or user-provided emphasis.
                 - Avoid generic contribution items. Prefer details that can be traced to commit messages, README, highlights, or repository facts.
                 - Vary item length deliberately. Use one short, direct item and one more detailed item when appropriate.
                 - Do not make all technicalContributions the same length.
@@ -286,7 +290,10 @@ public class GeminiPortfolioService {
                 First commit at: %s
                 Latest commit at: %s
                 Development period: %s
-                Recent commit messages: %s
+                Repository-wide recent commit messages: %s
+                User GitHub login: %s
+                User-authored commit count: %s
+                User recent commit messages: %s
 
                 Project name: %s
                 Project summary: %s
@@ -314,6 +321,9 @@ public class GeminiPortfolioService {
                 blankToEmpty(analysis.getLatestCommitAt()),
                 blankToEmpty(analysis.getDevelopmentPeriod()),
                 listToText(analysis.getRecentCommitMessages()),
+                blankToEmpty(analysis.getContributorLogin()),
+                numberToText(analysis.getUserCommitCount()),
+                listToText(analysis.getUserRecentCommitMessages()),
                 blankToEmpty(analysis.getProjectName()),
                 firstNonBlank(analysis.getSummary(), analysis.getReadmeSummary(), analysis.getDescription()),
                 listToText(analysis.getStacks()),

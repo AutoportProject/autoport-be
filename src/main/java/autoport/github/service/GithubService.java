@@ -109,6 +109,11 @@ public class GithubService {
         int openIssuesCount = repo.path("open_issues_count").asInt(0);
         int commitCount = commits.totalElements() > 0 ? commits.totalElements() : commits.content();
         CommitActivity commitActivity = fetchCommitActivity(user.getGithubAccessToken(), owner, repoName, commitCount);
+        CommitActivity userCommitActivity = fetchUserCommitActivity(
+                user.getGithubAccessToken(),
+                owner,
+                repoName,
+                user.getGithubLogin());
         int importanceScore = calculateImportanceScore(starCount, forkCount, commitCount, languages.size(), hasText(readme));
 
         List<String> defaultHighlights = buildHighlights(repo, languages, commitCount, readme);
@@ -136,7 +141,10 @@ public class GithubService {
                 commitActivity.firstCommitAt(),
                 commitActivity.latestCommitAt(),
                 buildDevelopmentPeriod(commitActivity.firstCommitAt(), commitActivity.latestCommitAt()),
-                commitActivity.recentMessages());
+                commitActivity.recentMessages(),
+                user.getGithubLogin(),
+                userCommitActivity.commitCount(),
+                userCommitActivity.recentMessages());
 
         GeminiPortfolioService.RepositoryAnalysisSummary aiSummary =
                 geminiPortfolioService.summarizeRepository(rawAiInputData);
@@ -171,7 +179,10 @@ public class GithubService {
                 commitActivity.firstCommitAt(),
                 commitActivity.latestCommitAt(),
                 buildDevelopmentPeriod(commitActivity.firstCommitAt(), commitActivity.latestCommitAt()),
-                commitActivity.recentMessages());
+                commitActivity.recentMessages(),
+                user.getGithubLogin(),
+                userCommitActivity.commitCount(),
+                userCommitActivity.recentMessages());
 
         return new GithubAnalyzeResponse(
                 repoId,
@@ -471,6 +482,25 @@ public class GithubService {
         return (lastPage - 1) * COMMIT_COUNT_PER_PAGE + lastPageCount;
     }
 
+    private int calculateUserCommitTotalElements(
+            String accessToken,
+            String owner,
+            String repoName,
+            String githubLogin,
+            Integer lastPage,
+            int firstPageCount) {
+        if (lastPage == null || lastPage <= 1) {
+            return firstPageCount;
+        }
+
+        int lastPageCount = fetchUserCommitPageCount(accessToken, owner, repoName, githubLogin, lastPage);
+        if (lastPageCount <= 0) {
+            return (lastPage - 1) * COMMIT_COUNT_PER_PAGE + firstPageCount;
+        }
+
+        return (lastPage - 1) * COMMIT_COUNT_PER_PAGE + lastPageCount;
+    }
+
     private int fetchCommitPageCount(String accessToken, String owner, String repoName, int page) {
         try {
             String body = restClient.get()
@@ -485,6 +515,33 @@ public class GithubService {
 
             JsonNode commits = objectMapper.readTree(body);
             return commits.isArray() ? commits.size() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private int fetchUserCommitPageCount(
+            String accessToken,
+            String owner,
+            String repoName,
+            String githubLogin,
+            int page) {
+        try {
+            String body = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/repos/{owner}/{repo}/commits")
+                            .queryParam("author", githubLogin)
+                            .queryParam("per_page", COMMIT_COUNT_PER_PAGE)
+                            .queryParam("page", page)
+                            .build(owner, repoName))
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode commits = objectMapper.readTree(body);
+            return commits.isArray() ? commits.size() : 0;
+        } catch (HttpClientErrorException.Conflict e) {
+            return 0;
         } catch (Exception e) {
             return 0;
         }
@@ -517,13 +574,73 @@ public class GithubService {
             }
 
             String firstCommitAt = fetchOldestCommitDate(accessToken, owner, repoName, commitCount, latestCommitAt);
-            return new CommitActivity(messages, firstCommitAt, latestCommitAt);
+            return new CommitActivity(messages, firstCommitAt, latestCommitAt, commitCount);
         } catch (HttpClientErrorException.Conflict e) {
-            return new CommitActivity(List.of(), null, null);
+            return new CommitActivity(List.of(), null, null, 0);
         } catch (RestClientResponseException e) {
             throw githubApiException(e, "Failed to fetch repository commits");
         } catch (Exception e) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        }
+    }
+
+    private CommitActivity fetchUserCommitActivity(
+            String accessToken,
+            String owner,
+            String repoName,
+            String githubLogin) {
+        if (!hasText(githubLogin)) {
+            return new CommitActivity(List.of(), null, null, 0);
+        }
+
+        try {
+            org.springframework.http.ResponseEntity<String> response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/repos/{owner}/{repo}/commits")
+                            .queryParam("author", githubLogin)
+                            .queryParam("per_page", COMMIT_COUNT_PER_PAGE)
+                            .queryParam("page", 1)
+                            .build(owner, repoName))
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .toEntity(String.class);
+
+            JsonNode commits = objectMapper.readTree(response.getBody());
+            List<String> messages = new ArrayList<>();
+            String latestCommitAt = null;
+
+            if (commits.isArray()) {
+                for (JsonNode commit : commits) {
+                    if (latestCommitAt == null) {
+                        latestCommitAt = commit.path("commit").path("author").path("date").asText(null);
+                    }
+                    if (messages.size() < 10) {
+                        String message = commit.path("commit").path("message").asText("");
+                        String firstLine = message.lines().findFirst().orElse("").trim();
+                        if (hasText(firstLine)) {
+                            messages.add(firstLine);
+                        }
+                    }
+                }
+            }
+
+            int currentPageCount = commits.isArray() ? commits.size() : 0;
+            Integer lastPage = parseLastPage(response.getHeaders().getFirst("Link"));
+            int totalElements = calculateUserCommitTotalElements(
+                    accessToken,
+                    owner,
+                    repoName,
+                    githubLogin,
+                    lastPage,
+                    currentPageCount);
+
+            return new CommitActivity(messages, null, latestCommitAt, totalElements);
+        } catch (HttpClientErrorException.Conflict e) {
+            return new CommitActivity(List.of(), null, null, 0);
+        } catch (RestClientResponseException e) {
+            throw githubApiException(e, "Failed to fetch repository commits");
+        } catch (Exception e) {
+            return new CommitActivity(List.of(), null, null, 0);
         }
     }
 
@@ -764,6 +881,10 @@ public class GithubService {
     private record GithubPage<T>(T content, int totalElements) {
     }
 
-    private record CommitActivity(List<String> recentMessages, String firstCommitAt, String latestCommitAt) {
+    private record CommitActivity(
+            List<String> recentMessages,
+            String firstCommitAt,
+            String latestCommitAt,
+            int commitCount) {
     }
 }
