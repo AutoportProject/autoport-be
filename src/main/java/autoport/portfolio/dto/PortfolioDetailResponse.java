@@ -16,6 +16,10 @@ public class PortfolioDetailResponse {
     private String bio;
     private String summary;
     private String description;
+    private List<String> technicalContributions;
+    private List<String> codeHighlights;
+    private List<String> projectLinks;
+    private String generatedAt;
     private Long templateId;
 
     @JsonProperty("isPublic")

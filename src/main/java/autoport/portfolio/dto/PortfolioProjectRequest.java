@@ -1,7 +1,6 @@
 package autoport.portfolio.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 public class PortfolioProjectRequest {
 
-    @NotNull(message = "repoId는 필수입니다.")
     private Long repoId;
 
     @NotBlank(message = "project name은 필수입니다.")
@@ -20,7 +18,15 @@ public class PortfolioProjectRequest {
     @NotBlank(message = "project description은 필수입니다.")
     private String description;
 
+    private String oneLineDescription;
+
+    private String estimatedPeriod;
+
+    private String role;
+
     private List<String> techStacks;
+
+    private List<String> mainFeatures;
 
     private List<String> highlights;
 

@@ -50,6 +50,10 @@ CREATE TABLE IF NOT EXISTS portfolios (
     bio TEXT NOT NULL,
     summary TEXT,
     description TEXT,
+    technical_contributions_json TEXT,
+    code_highlights_json TEXT,
+    project_links_json TEXT,
+    generated_at TEXT,
     is_public BOOLEAN NOT NULL,
     featured_project_id BIGINT,
     created_at TIMESTAMP NOT NULL,
@@ -62,10 +66,14 @@ CREATE TABLE IF NOT EXISTS portfolio_projects (
     repo_id BIGINT,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
+    one_line_description TEXT,
+    estimated_period TEXT,
+    role TEXT,
     github_url TEXT,
     deploy_url TEXT,
     display_order INTEGER,
     tech_stacks_json TEXT,
+    main_features_json TEXT,
     highlights_json TEXT,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
@@ -82,8 +90,32 @@ BEGIN
     ALTER TABLE portfolios
     ADD COLUMN IF NOT EXISTS description TEXT;
 
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS technical_contributions_json TEXT;
+
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS code_highlights_json TEXT;
+
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS project_links_json TEXT;
+
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS generated_at TEXT;
+
+    ALTER TABLE portfolio_projects
+    ADD COLUMN IF NOT EXISTS one_line_description TEXT;
+
+    ALTER TABLE portfolio_projects
+    ADD COLUMN IF NOT EXISTS estimated_period TEXT;
+
+    ALTER TABLE portfolio_projects
+    ADD COLUMN IF NOT EXISTS role TEXT;
+
     ALTER TABLE portfolio_projects
     ADD COLUMN IF NOT EXISTS deploy_url TEXT;
+
+    ALTER TABLE portfolio_projects
+    ADD COLUMN IF NOT EXISTS main_features_json TEXT;
 
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'fk_portfolios_user'

@@ -29,6 +29,15 @@ public class PortfolioProject {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "one_line_description", columnDefinition = "TEXT")
+    private String oneLineDescription;
+
+    @Column(name = "estimated_period", columnDefinition = "TEXT")
+    private String estimatedPeriod;
+
+    @Column(columnDefinition = "TEXT")
+    private String role;
+
     @Column(name = "github_url", columnDefinition = "TEXT")
     private String githubUrl;
 
@@ -40,6 +49,9 @@ public class PortfolioProject {
 
     @Column(name = "tech_stacks_json", columnDefinition = "TEXT")
     private String techStacksJson;
+
+    @Column(name = "main_features_json", columnDefinition = "TEXT")
+    private String mainFeaturesJson;
 
     @Column(name = "highlights_json", columnDefinition = "TEXT")
     private String highlightsJson;
@@ -55,20 +67,28 @@ public class PortfolioProject {
             Long repoId,
             String name,
             String description,
+            String oneLineDescription,
+            String estimatedPeriod,
+            String role,
             String githubUrl,
             String deployUrl,
             Integer displayOrder,
             String techStacksJson,
+            String mainFeaturesJson,
             String highlightsJson) {
         PortfolioProject project = new PortfolioProject();
         project.portfolio = portfolio;
         project.repoId = repoId;
         project.name = name;
         project.description = description;
+        project.oneLineDescription = oneLineDescription;
+        project.estimatedPeriod = estimatedPeriod;
+        project.role = role;
         project.githubUrl = githubUrl;
         project.deployUrl = deployUrl;
         project.displayOrder = displayOrder;
         project.techStacksJson = techStacksJson;
+        project.mainFeaturesJson = mainFeaturesJson;
         project.highlightsJson = highlightsJson;
         project.createdAt = LocalDateTime.now();
         project.updatedAt = LocalDateTime.now();

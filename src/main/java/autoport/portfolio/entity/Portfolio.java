@@ -37,6 +37,18 @@ public class Portfolio {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "technical_contributions_json", columnDefinition = "TEXT")
+    private String technicalContributionsJson;
+
+    @Column(name = "code_highlights_json", columnDefinition = "TEXT")
+    private String codeHighlightsJson;
+
+    @Column(name = "project_links_json", columnDefinition = "TEXT")
+    private String projectLinksJson;
+
+    @Column(name = "generated_at", columnDefinition = "TEXT")
+    private String generatedAt;
+
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic;
 
@@ -56,6 +68,10 @@ public class Portfolio {
             String bio,
             String summary,
             String description,
+            String technicalContributionsJson,
+            String codeHighlightsJson,
+            String projectLinksJson,
+            String generatedAt,
             Boolean isPublic,
             Long featuredProjectId) {
         Portfolio portfolio = new Portfolio();
@@ -65,6 +81,10 @@ public class Portfolio {
         portfolio.bio = bio;
         portfolio.summary = summary;
         portfolio.description = description;
+        portfolio.technicalContributionsJson = technicalContributionsJson;
+        portfolio.codeHighlightsJson = codeHighlightsJson;
+        portfolio.projectLinksJson = projectLinksJson;
+        portfolio.generatedAt = generatedAt;
         portfolio.isPublic = isPublic != null && isPublic;
         portfolio.featuredProjectId = featuredProjectId;
         portfolio.createdAt = LocalDateTime.now();
@@ -78,6 +98,10 @@ public class Portfolio {
             String bio,
             String summary,
             String description,
+            String technicalContributionsJson,
+            String codeHighlightsJson,
+            String projectLinksJson,
+            String generatedAt,
             Boolean isPublic,
             Long featuredProjectId) {
         this.template = template;
@@ -85,6 +109,10 @@ public class Portfolio {
         this.bio = bio;
         this.summary = summary;
         this.description = description;
+        this.technicalContributionsJson = technicalContributionsJson;
+        this.codeHighlightsJson = codeHighlightsJson;
+        this.projectLinksJson = projectLinksJson;
+        this.generatedAt = generatedAt;
         this.isPublic = isPublic != null && isPublic;
         this.featuredProjectId = featuredProjectId;
         this.updatedAt = LocalDateTime.now();

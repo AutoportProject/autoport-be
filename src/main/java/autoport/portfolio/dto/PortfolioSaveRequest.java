@@ -1,5 +1,6 @@
 package autoport.portfolio.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -14,14 +15,24 @@ import java.util.List;
 public class PortfolioSaveRequest {
 
     @NotBlank(message = "title은 필수입니다.")
+    @JsonAlias("portfolioTitle")
     private String title;
 
     @NotBlank(message = "bio는 필수입니다.")
+    @JsonAlias("introduction")
     private String bio;
 
     private String summary;
 
     private String description;
+
+    private List<String> technicalContributions;
+
+    private List<String> codeHighlights;
+
+    private List<String> projectLinks;
+
+    private String generatedAt;
 
     private Long templateId;
 
