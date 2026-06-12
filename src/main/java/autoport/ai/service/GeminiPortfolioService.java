@@ -152,6 +152,10 @@ public class GeminiPortfolioService {
                 Vary sentence rhythm intentionally. Mix short and long sentences across array items.
                 Do not repeat the same ending pattern such as "\uAD6C\uD604\uD588\uC2B5\uB2C8\uB2E4" or "\uC124\uACC4\uD588\uC2B5\uB2C8\uB2E4" three or more times in a row.
                 Do not use vague adjectives such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the repository data provides concrete evidence.
+                Do not use stiff official-document phrasing such as "\uBCF8", "\uD574\uB2F9", "\uBCF8 \uD504\uB85C\uC81D\uD2B8", or "\uD574\uB2F9 \uD504\uB85C\uC81D\uD2B8".
+                Do not use sentence structures like "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294 ~", "\uBCF8 \uD3EC\uD2B8\uD3F4\uB9AC\uC624\uB294 ~", or "\uD574\uB2F9 \uD504\uB85C\uC81D\uD2B8\uB294 ~" at the beginning of project descriptions.
+                Do not end project descriptions with "\uB97C \uBAA9\uD45C\uB85C \uD569\uB2C8\uB2E4", "\uC5D0 \uC911\uC810\uC744 \uB450\uC5C8\uC2B5\uB2C8\uB2E4", or "\uC5ED\uB7C9\uC744 \uBCF4\uC5EC\uC90D\uB2C8\uB2E4".
+                Do not use the pattern "~\uC744 \uD1B5\uD574 ~\uB97C \uC81C\uACF5\uD569\uB2C8\uB2E4".
                 Do not force every array to have the same number of items. Omit weak or repetitive items.
                 If User emphasis request is provided, place that topic first in technicalContributions or highlights.
                 Attribute work to the user only when it is supported by User-authored commit data, User recent commit messages, User emphasis request, or explicit user-provided bio.
@@ -187,15 +191,18 @@ public class GeminiPortfolioService {
 
                 Portfolio template requirements:
                 1. One-line title
-                - Write one natural Korean sentence, not a label.
+                - Write one natural Korean sentence, not a label or fragment.
                 - Include the user's name.
                 - Do not use a colon after the user's name.
                 - Do not use exaggerated words such as "\uC804\uBB38\uAC00", "\uB9C8\uC2A4\uD130", "\uCD5C\uACE0", "\uD0C1\uC6D4\uD55C".
-                - Prefer experience-based endings such as "\uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790", "\uACBD\uD5D8\uC744 \uAC00\uC9C4 \uAC1C\uBC1C\uC790", "\uAC1C\uC120\uD55C \uAC1C\uBC1C\uC790", or "\uC124\uACC4\uD55C \uAC1C\uBC1C\uC790".
-                - Keep it under 35 Korean characters when possible.
+                - Prefer the form "~\uD55C \uAC1C\uBC1C\uC790 {userName}\uC785\uB2C8\uB2E4.".
+                - Do not write awkward fragments like "~\uD55C {userName}." or "{userName}, ~\uD55C \uAC1C\uBC1C\uC790".
+                - Keep it concise enough for a hero/title area.
                 - If repository data is sparse, describe the project experience rather than claiming broad expertise.
-                - Good example: "RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1\uC744 \uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790 \uC774\uCC44\uC6D0".
+                - Good example: "RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1\uC744 \uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790 \uC774\uCC44\uC6D0\uC785\uB2C8\uB2E4.".
+                - Good example: "Next.js App Router\uB85C \uC778\uC99D \uD750\uB984\uC744 \uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790 \uAE40\uD6A8\uC740\uC785\uB2C8\uB2E4.".
                 - Bad example: "\uC774\uCC44\uC6D0: \uBA40\uD2F0\uBAA8\uB2EC RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1 \uC2DC\uC2A4\uD15C \uAC1C\uBC1C \uC804\uBB38\uAC00".
+                - Bad example: "\uBD84\uC11D \uBC0F \uC2DC\uAC01\uD654 \uAC1C\uC120\uC744 \uC218\uD589\uD55C \uAE40\uD6A8\uC740.".
 
                 Introduction
                 - Explain the user's project experience in 2-3 natural Korean sentences.
@@ -221,6 +228,12 @@ public class GeminiPortfolioService {
                 - Include project name, one-line summary, development period, and the user's role.
                 - The project description must include the project purpose, target users, and core feature flow when the repository data supports them.
                 - The project description should answer what the project is, not how it was implemented.
+                - Project description must not start with "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294", "\uBCF8 \uD3EC\uD2B8\uD3F4\uB9AC\uC624\uB294", or "\uD574\uB2F9 \uD504\uB85C\uC81D\uD2B8\uB294".
+                - Project description must not end with "\uB97C \uBAA9\uD45C\uB85C \uD569\uB2C8\uB2E4", "\uC5D0 \uC911\uC810\uC744 \uB450\uC5C8\uC2B5\uB2C8\uB2E4", or "\uC5ED\uB7C9\uC744 \uBCF4\uC5EC\uC90D\uB2C8\uB2E4".
+                - Avoid "\uBCF8 ~" and "\uD574\uB2F9 ~" in all project fields.
+                - Avoid the pattern "~\uC744 \uD1B5\uD574 ~\uB97C \uC81C\uACF5\uD569\uB2C8\uB2E4"; write the actual action directly instead.
+                - Prefer subjectless or first-person phrasing such as "\uB2F4\uB2F9\uD588\uC2B5\uB2C8\uB2E4" and "\uAD6C\uD604\uD588\uC2B5\uB2C8\uB2E4" when describing the user's work, but do not repeat "\uD588\uC2B5\uB2C8\uB2E4" in every sentence.
+                - Put a technology name and a concrete action in the same sentence when possible, such as "Next.js App Router \uAE30\uBC18\uC73C\uB85C \uC778\uC99D \uD750\uB984\uC744 \uAD6C\uD604\uD588\uC2B5\uB2C8\uB2E4".
                 - Use Development period from commit analysis as the project's estimatedPeriod when it is provided.
                 - Development period is calculated from the entire repository commit history, not from one user's personal commits.
                 - If Development period is empty, write "\uAC1C\uBC1C \uAE30\uAC04 \uC815\uBCF4 \uC5C6\uC74C".
