@@ -397,6 +397,9 @@ public class GeminiPortfolioService {
                 - Prefer plain product/engineering descriptions over exhaustive feature lists.
                 - Avoid vague praise such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the data supports it.
                 - If README information is sparse, say what is known from repository description, languages, and recent commits.
+                - If repository data is insufficient, state it once in readmeSummary only.
+                - Do not repeat "\uC815\uBCF4\uAC00 \uBD80\uC871\uD569\uB2C8\uB2E4" or "\uC81C\uD55C\uC801\uC785\uB2C8\uB2E4" across multiple fields.
+                - Leave highlights as [] if there is not enough data to infer meaningful points.
 
                 Repository facts:
                 Project name: %s
