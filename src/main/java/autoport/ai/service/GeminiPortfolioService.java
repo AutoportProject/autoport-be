@@ -382,10 +382,14 @@ public class GeminiPortfolioService {
                 Requirements:
                 - readmeSummary must be 2 short Korean sentences, 180 Korean characters or fewer in total.
                 - readmeSummary must explain what the project is and its main user-facing or API flow.
+                - readmeSummary must not start with "\uC800\uC7A5\uC18C \uBD84\uC11D \uACB0\uACFC" or "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294".
+                - Do not copy or directly paraphrase README sentences. Rewrite based on the repository facts and implementation context.
                 - Do not copy README lists, API paths, endpoint names, dependency names, environment setup, Swagger routes, or command snippets.
                 - Do not include raw URL paths such as "/api/..." or file names unless they are essential.
                 - activitySummary must be one natural Korean sentence, 90 Korean characters or fewer.
+                - activitySummary must not use subjective evaluation words such as "\uD65C\uBC1C\uD55C" or "\uAFB8\uC900\uD55C".
                 - highlights must contain 3-4 short portfolio-worthy points, each 45 Korean characters or fewer.
+                - highlights must not be simple tool lists or obvious tool consequences such as "TypeScript\uB85C \uD0C0\uC785 \uC548\uC815\uC131\uC744 \uD655\uBCF4".
                 - Keep every field readable in a compact card UI.
                 - Prefer plain product/engineering descriptions over exhaustive feature lists.
                 - Avoid vague praise such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the data supports it.
