@@ -195,12 +195,17 @@ public class GeminiPortfolioService {
                 - Include the user's name.
                 - Do not use a colon after the user's name.
                 - Do not use exaggerated words such as "\uC804\uBB38\uAC00", "\uB9C8\uC2A4\uD130", "\uCD5C\uACE0", "\uD0C1\uC6D4\uD55C".
-                - Prefer the form "~\uD55C \uAC1C\uBC1C\uC790 {userName}\uC785\uB2C8\uB2E4.".
+                - Use the headline form "~\uD55C \uAC1C\uBC1C\uC790 {userName}\uC785\uB2C8\uB2E4.".
+                - In the "~\uD55C" part, do not simply list technology names. Express the actual work with verbs such as "\uB2E4\uB8EC", "\uB9E1\uC740", "\uC9D1\uC911\uD55C", "\uAC1C\uC120\uD55C", or "\uC124\uACC4\uD55C".
+                - Base the "~\uD55C" part only on work that is supported by commit messages, issues, README, user-authored commits, or user-provided emphasis.
+                - Prefer role-specific titles such as "\uD504\uB860\uD2B8\uC5D4\uB4DC \uAC1C\uBC1C\uC790", "\uBC31\uC5D4\uB4DC \uAC1C\uBC1C\uC790", "\uD480\uC2A4\uD0DD \uAC1C\uBC1C\uC790", or "AI \uAC1C\uBC1C\uC790" when the repository data supports the role.
                 - Do not write awkward fragments like "~\uD55C {userName}." or "{userName}, ~\uD55C \uAC1C\uBC1C\uC790".
+                - Do not write technology-only headlines such as "Next.js \uAE30\uBC18 \uC778\uC99D \uC2DC\uC2A4\uD15C\uC744 \uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790 {userName}\uC785\uB2C8\uB2E4.".
+                - Do not write vague adjective headlines such as "\uD6A8\uC728\uC801\uC778 \uD504\uB860\uD2B8\uC5D4\uB4DC\uB97C \uAC1C\uBC1C\uD558\uB294 \uAC1C\uBC1C\uC790 {userName}\uC785\uB2C8\uB2E4.".
                 - Keep it concise enough for a hero/title area.
                 - If repository data is sparse, describe the project experience rather than claiming broad expertise.
-                - Good example: "RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1\uC744 \uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790 \uC774\uCC44\uC6D0\uC785\uB2C8\uB2E4.".
-                - Good example: "Next.js App Router\uB85C \uC778\uC99D \uD750\uB984\uC744 \uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790 \uAE40\uD6A8\uC740\uC785\uB2C8\uB2E4.".
+                - Good example: "\uC778\uC99D\uACFC WebView \uD658\uACBD\uC744 \uB2E4\uB8EC \uD504\uB860\uD2B8\uC5D4\uB4DC \uAC1C\uBC1C\uC790 \uAE40\uD6A8\uC740\uC785\uB2C8\uB2E4.".
+                - Good example: "Next.js\uB85C \uC0AC\uC6A9\uC790 \uC778\uC99D \uD750\uB984\uC744 \uB9E1\uC740 \uD504\uB860\uD2B8\uC5D4\uB4DC \uAC1C\uBC1C\uC790 \uAE40\uD6A8\uC740\uC785\uB2C8\uB2E4.".
                 - Bad example: "\uC774\uCC44\uC6D0: \uBA40\uD2F0\uBAA8\uB2EC RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1 \uC2DC\uC2A4\uD15C \uAC1C\uBC1C \uC804\uBB38\uAC00".
                 - Bad example: "\uBD84\uC11D \uBC0F \uC2DC\uAC01\uD654 \uAC1C\uC120\uC744 \uC218\uD589\uD55C \uAE40\uD6A8\uC740.".
 
