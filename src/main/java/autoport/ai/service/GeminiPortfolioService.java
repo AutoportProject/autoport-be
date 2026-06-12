@@ -148,24 +148,34 @@ public class GeminiPortfolioService {
                 Return valid JSON only. Do not wrap it in markdown.
                 Never include text outside the JSON object. Never include markdown fences.
                 Return empty arrays as [] instead of null.
-                Do not use markdown syntax in any string value. Plain text only. Do not use **bold**, *italic*, ## headings, bullet markers, or markdown links inside JSON string values.
+                Do not use markdown syntax in any string value. Plain text only.
                 Vary sentence rhythm intentionally. Mix short and long sentences across array items.
-                Do not repeat the same ending pattern such as "\uAD6C\uD604\uD588\uC2B5\uB2C8\uB2E4" or "\uC124\uACC4\uD588\uC2B5\uB2C8\uB2E4" three or more times in a row.
-                Do not use vague adjectives such as "\uD6A8\uC728\uC801", "\uC548\uC815\uC801", "\uCD5C\uC801\uD654", or "\uACAC\uACE0\uD55C" unless the repository data provides concrete evidence.
-                Do not use stiff official-document phrasing such as "\uBCF8", "\uD574\uB2F9", "\uBCF8 \uD504\uB85C\uC81D\uD2B8", or "\uD574\uB2F9 \uD504\uB85C\uC81D\uD2B8".
-                Do not use sentence structures like "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294 ~", "\uBCF8 \uD3EC\uD2B8\uD3F4\uB9AC\uC624\uB294 ~", or "\uD574\uB2F9 \uD504\uB85C\uC81D\uD2B8\uB294 ~" at the beginning of project descriptions.
-                Do not end project descriptions with "\uB97C \uBAA9\uD45C\uB85C \uD569\uB2C8\uB2E4", "\uC5D0 \uC911\uC810\uC744 \uB450\uC5C8\uC2B5\uB2C8\uB2E4", or "\uC5ED\uB7C9\uC744 \uBCF4\uC5EC\uC90D\uB2C8\uB2E4".
-                Do not use the pattern "~\uC744 \uD1B5\uD574 ~\uB97C \uC81C\uACF5\uD569\uB2C8\uB2E4".
+                Do not repeat the same ending pattern such as "구현했습니다" or "설계했습니다" three or more times in a row.
+                Do not use vague adjectives such as "효율적", "안정적", "최적화", or "견고한" unless the repository data provides concrete evidence.
+                Do not use stiff official-document phrasing such as "본", "해당", "본 프로젝트", or "해당 프로젝트".
+                Do not use sentence structures like "이 프로젝트는 ~", "본 포트폴리오는 ~", or "해당 프로젝트는 ~" at the beginning of project descriptions.
+                Do not end project descriptions with "를 목표로 합니다", "에 중점을 두었습니다", or "역량을 보여줍니다".
+                Do not use the pattern "~을 통해 ~를 제공합니다".
                 Do not force every array to have the same number of items. Omit weak or repetitive items.
                 If User emphasis request is provided, place that topic first in technicalContributions or highlights.
+                Do not copy or paraphrase README content directly into description or summary. Rewrite based on what was actually implemented.
+                Do not write vague phrases like "핵심 기능을 구현했습니다" or "주요 기능을 개발했습니다". Name the actual features.
+                Do not state obvious consequences of using a technology, such as "TypeScript로 타입 안정성을 확보". Focus on what was actually built, not what the tool provides by default.
+                
                 Attribute work to the user only when it is supported by User-authored commit data, User recent commit messages, User emphasis request, or explicit user-provided bio.
                 Repository-wide README, highlights, and recent commit messages describe the project, but they do not prove the user personally implemented every item.
-                If User-authored commit data is empty or sparse, avoid claiming ownership of specific features. Use neutral phrasing such as "\uD504\uB85C\uC81D\uD2B8\uC5D0\uC11C \uB2E4\uB8EC \uAD6C\uD604 \uBC94\uC704" or "\uD655\uC778\uB41C \uAE30\uC5EC \uC815\uBCF4\uB294 \uC81C\uD55C\uC801\uC785\uB2C8\uB2E4".
-                Keep field responsibilities separate: description explains what the project is, mainFeatures explains what it does for users, technicalContributions explains how it was implemented, and codeHighlights explains why a specific implementation matters.
+                If User-authored commit data is empty or sparse, avoid claiming ownership of specific features. Use neutral phrasing such as "프로젝트에서 다룬 구현 범위" or "확인된 기여 정보는 제한적입니다".
+                
+                Keep field responsibilities separate:
+                description explains what the project is.
+                mainFeatures explains what it does for users.
+                technicalContributions explains how it was implemented.
+                codeHighlights explains why a specific implementation matters.
+                
                 If Importance score is 5 or lower, keep the output brief and focus mainly on highlights.
-                Write the introduction without a subject or in first person. Avoid third-person expressions like "\uC815\uBBFC\uC11C\uB294", "\uAC1C\uBC1C\uC790\uB294", or "\uC815\uBBFC\uC11C \uAC1C\uBC1C\uC790\uB294".
-                Avoid user-facing guide phrases such as "\uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4", "\uC785\uB825 \uD544\uC694", "\uC815\uBCF4\uAC00 \uD544\uC694\uD569\uB2C8\uB2E4", or "\uC81C\uACF5\uD569\uB2C8\uB2E4".
-
+                Write the introduction without a subject. Avoid third-person expressions like "정민서는", "개발자는", or "정민서 개발자는".
+                Avoid user-facing guide phrases such as "확인할 수 있습니다", "입력 필요", "정보가 필요합니다", or "제공합니다".
+                
                 JSON schema:
                 {
                   "portfolioTitle": "string",
@@ -188,114 +198,115 @@ public class GeminiPortfolioService {
                   "codeHighlights": ["string"],
                   "projectLinks": ["string"]
                 }
-
+                
                 Portfolio template requirements:
+                
                 1. One-line title
                 - Write one natural Korean sentence, not a label or fragment.
                 - Include the user's name.
                 - Do not use a colon after the user's name.
-                - Do not use exaggerated words such as "\uC804\uBB38\uAC00", "\uB9C8\uC2A4\uD130", "\uCD5C\uACE0", "\uD0C1\uC6D4\uD55C".
-                - Use the headline form "~\uD55C \uAC1C\uBC1C\uC790 {userName}\uC785\uB2C8\uB2E4.".
-                - In the "~\uD55C" part, do not simply list technology names. Express the actual work with verbs such as "\uB2E4\uB8EC", "\uB9E1\uC740", "\uC9D1\uC911\uD55C", "\uAC1C\uC120\uD55C", or "\uC124\uACC4\uD55C".
-                - Base the "~\uD55C" part only on work that is supported by commit messages, issues, README, user-authored commits, or user-provided emphasis.
-                - Prefer role-specific titles such as "\uD504\uB860\uD2B8\uC5D4\uB4DC \uAC1C\uBC1C\uC790", "\uBC31\uC5D4\uB4DC \uAC1C\uBC1C\uC790", "\uD480\uC2A4\uD0DD \uAC1C\uBC1C\uC790", or "AI \uAC1C\uBC1C\uC790" when the repository data supports the role.
-                - Do not write awkward fragments like "~\uD55C {userName}." or "{userName}, ~\uD55C \uAC1C\uBC1C\uC790".
-                - Do not write technology-only headlines such as "Next.js \uAE30\uBC18 \uC778\uC99D \uC2DC\uC2A4\uD15C\uC744 \uAD6C\uD604\uD55C \uAC1C\uBC1C\uC790 {userName}\uC785\uB2C8\uB2E4.".
-                - Do not write vague adjective headlines such as "\uD6A8\uC728\uC801\uC778 \uD504\uB860\uD2B8\uC5D4\uB4DC\uB97C \uAC1C\uBC1C\uD558\uB294 \uAC1C\uBC1C\uC790 {userName}\uC785\uB2C8\uB2E4.".
-                - Keep it concise enough for a hero/title area.
-                - If repository data is sparse, describe the project experience rather than claiming broad expertise.
-                - Good example: "\uC778\uC99D\uACFC WebView \uD658\uACBD\uC744 \uB2E4\uB8EC \uD504\uB860\uD2B8\uC5D4\uB4DC \uAC1C\uBC1C\uC790 \uAE40\uD6A8\uC740\uC785\uB2C8\uB2E4.".
-                - Good example: "Next.js\uB85C \uC0AC\uC6A9\uC790 \uC778\uC99D \uD750\uB984\uC744 \uB9E1\uC740 \uD504\uB860\uD2B8\uC5D4\uB4DC \uAC1C\uBC1C\uC790 \uAE40\uD6A8\uC740\uC785\uB2C8\uB2E4.".
-                - Bad example: "\uC774\uCC44\uC6D0: \uBA40\uD2F0\uBAA8\uB2EC RAG \uAE30\uBC18 AI \uD29C\uD130\uB9C1 \uC2DC\uC2A4\uD15C \uAC1C\uBC1C \uC804\uBB38\uAC00".
-                - Bad example: "\uBD84\uC11D \uBC0F \uC2DC\uAC01\uD654 \uAC1C\uC120\uC744 \uC218\uD589\uD55C \uAE40\uD6A8\uC740.".
-
+                - Do not use exaggerated words such as "전문가", "마스터", "최고", "탁월한".
+                - Use the headline form "~한 개발자 {userName}입니다.".
+                - In the "~한" part, do not simply list technology names.
+                - Express the actual work with verbs such as "다룬", "맡은", "집중한", "개선한", or "설계한".
+                - Base the "~한" part only on work that is supported by commit messages, issues, README, user-authored commits, or user-provided emphasis.
+                - Prefer role-specific titles such as "프론트엔드 개발자", "백엔드 개발자", "풀스택 개발자", or "AI 개발자" when the repository data supports the role.
+                - Do not write awkward fragments like "~한 {userName}." or "{userName}, ~한 개발자".
+                - Do not use "개발한 개발자" in the title. The verb before "개발자" must not be "개발한". Prefer verbs such as "다룬", "맡은", "집중한", or "설계한".
+                - Do not write technology-only headlines such as "Next.js 기반 인증 시스템을 구현한 개발자 {userName}입니다.".
+                - Do not write vague adjective headlines such as "효율적인 프론트엔드를 개발하는 개발자 {userName}입니다.".
+                - Keep the title under 30 Korean characters when possible.
+                - Bad example: "Next.js 기반 개인 포트폴리오 서비스 프론트엔드를 개발한 개발자 민서입니다."
+                - Good example: "인증과 WebView 환경을 다룬 프론트엔드 개발자 김효은입니다."
+                - Good example: "Next.js로 사용자 인증 흐름을 맡은 프론트엔드 개발자 김효은입니다."
+                
                 Introduction
                 - Explain the user's project experience in no more than 2 natural Korean sentences.
-                - Do not start with "\uC800\uB294". Avoid patterns like "\uC800\uB294 ~\uB97C \uC218\uD589\uD588\uC2B5\uB2C8\uB2E4" or "\uC800\uB294 ~\uB97C \uB2F4\uB2F9\uD588\uC2B5\uB2C8\uB2E4".
+                - Do not start with "저는".
+                - Avoid patterns like "저는 ~를 수행했습니다" or "저는 ~를 담당했습니다".
                 - Start without an explicit subject and focus on the actual work performed.
-                - Do not start with third-person phrasing such as "\uC815\uBBFC\uC11C\uB294", "\uAC1C\uBC1C\uC790\uB294", or "\uC800\uB294".
+                - Do not start with third-person phrasing such as "정민서는", "개발자는", or "저는".
                 - Do not introduce the user as an expert unless the input data strongly supports it.
                 - Base the introduction on what was implemented, improved, designed, or analyzed in the repository.
                 - Avoid broad claims that are not supported by the repository data.
                 - Put a technology name and concrete work in the same sentence when possible.
-                - Good example: "Next.js\uB85C \uC778\uC99D \uD750\uB984\uC744 \uAD6C\uD604\uD558\uACE0, iOS WebView \uD658\uACBD\uC5D0\uC11C\uC758 \uCFE0\uD0A4 \uC138\uC158 \uBCF5\uC6D0\uAE4C\uC9C0 \uCC98\uB9AC\uD588\uC2B5\uB2C8\uB2E4.".
-                - Bad example: "\uC800\uB294 Next.js\uB97C \uD65C\uC6A9\uD558\uC5EC \uD504\uB85C\uC81D\uD2B8\uB97C \uC218\uD589\uD588\uC2B5\uB2C8\uB2E4. \uC2E0\uB8B0\uC131\uC744 \uB192\uC600\uC2B5\uB2C8\uB2E4.".
-
+                - Good example: "Next.js로 인증 흐름을 구현하고, iOS WebView 환경에서의 쿠키 세션 복원까지 처리했습니다."
+                
                 Summary
                 - Create a new top-level summary for portfolio cards and My Page lists.
                 - Do not copy introduction exactly.
+                - Do not copy or paraphrase README content directly. Rewrite based on what was actually implemented.
                 - Keep it to one concise Korean sentence under 80 Korean characters when possible.
                 - Summarize the strongest project identity or contribution area.
-
+                
                 Description
                 - Create a new top-level description for portfolio detail previews.
                 - Do not copy introduction exactly.
+                - Do not copy or paraphrase README content directly. Rewrite based on what was actually implemented.
                 - Write 1-2 Korean sentences that explain the overall portfolio theme, representative project, and practical value.
                 - Keep it shorter and more scannable than introduction.
-
+                - Do not write vague phrases like "핵심 기능을 구현했습니다". Name the actual features.
+                
                 2. Project detail
                 - Include project name, one-line summary, development period, and the user's role.
                 - The project description must include the project purpose, target users, and core feature flow when the repository data supports them.
                 - The project description should answer what the project is, not how it was implemented.
-                - Project description must not start with "\uC774 \uD504\uB85C\uC81D\uD2B8\uB294", "\uBCF8 \uD3EC\uD2B8\uD3F4\uB9AC\uC624\uB294", or "\uD574\uB2F9 \uD504\uB85C\uC81D\uD2B8\uB294".
-                - Project description must not end with "\uB97C \uBAA9\uD45C\uB85C \uD569\uB2C8\uB2E4", "\uC5D0 \uC911\uC810\uC744 \uB450\uC5C8\uC2B5\uB2C8\uB2E4", or "\uC5ED\uB7C9\uC744 \uBCF4\uC5EC\uC90D\uB2C8\uB2E4".
-                - Avoid "\uBCF8 ~" and "\uD574\uB2F9 ~" in all project fields.
-                - Avoid the pattern "~\uC744 \uD1B5\uD574 ~\uB97C \uC81C\uACF5\uD569\uB2C8\uB2E4"; write the actual action directly instead.
-                - Prefer subjectless or first-person phrasing such as "\uB2F4\uB2F9\uD588\uC2B5\uB2C8\uB2E4" and "\uAD6C\uD604\uD588\uC2B5\uB2C8\uB2E4" when describing the user's work, but do not repeat "\uD588\uC2B5\uB2C8\uB2E4" in every sentence.
-                - Put a technology name and a concrete action in the same sentence when possible, such as "Next.js App Router \uAE30\uBC18\uC73C\uB85C \uC778\uC99D \uD750\uB984\uC744 \uAD6C\uD604\uD588\uC2B5\uB2C8\uB2E4".
+                - Project description must not start with "이 프로젝트는", "본 포트폴리오는", or "해당 프로젝트는".
+                - Project description must not end with "를 목표로 합니다", "에 중점을 두었습니다", or "역량을 보여줍니다".
+                - Avoid "본 ~" and "해당 ~" in all project fields.
+                - Avoid the pattern "~을 통해 ~를 제공합니다"; write the actual action directly instead.
+                - Put a technology name and a concrete action in the same sentence when possible.
                 - Use Development period from commit analysis as the project's estimatedPeriod when it is provided.
                 - Development period is calculated from the entire repository commit history, not from one user's personal commits.
-                - If Development period is empty, write "\uAC1C\uBC1C \uAE30\uAC04 \uC815\uBCF4 \uC5C6\uC74C".
-                - For role: if the repository appears to be a solo repository, write "\uD480\uC2A4\uD0DD \uAC1C\uBC1C\uC790 (1\uC778 \uAC1C\uBC1C)".
-                - For role: if the repository appears collaborative, infer the role primarily from User-authored commit count and User recent commit messages. Use repository-wide commit messages only as project context.
-                - For role: if the role cannot be inferred, write "\uC5ED\uD560 \uC815\uBCF4 \uC5C6\uC74C".
-
+                - If Development period is empty, write "개발 기간 정보 없음".
+                - For role: if the repository appears to be a solo repository, write "풀스택 개발자 (1인 개발)".
+                - For role: if collaborative, infer the role primarily from User-authored commit count and User recent commit messages.
+                - For role: if the role cannot be inferred, write "역할 정보 없음".
+                
                 3. Tech stack
                 - Use the provided stack list as the primary source.
                 - Do not add unrelated technologies.
-
+                
                 4. Main features
                 - Summarize likely user-facing or technical features from the summary, README, and highlights.
                 - mainFeatures should describe what the project does from a user or service perspective, not implementation details.
                 - Order mainFeatures by importance.
                 - Omit less important features instead of filling the list evenly.
-
+                
                 5. Technical contribution and problem solving
                 - Turn meaningful changes into a story.
                 - technicalContributions should describe how the project was implemented or improved.
                 - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
-                - Analyze User recent commit messages first and reflect concrete implementation work such as feature additions, bug fixes, refactoring, documentation changes, and rendering fixes.
+                - Analyze User recent commit messages first.
                 - Do not turn repository-wide recent commit messages into the user's personal contribution unless the same work appears in User recent commit messages or user-provided emphasis.
-                - Avoid generic contribution items. Prefer details that can be traced to commit messages, README, highlights, or repository facts.
-                - Vary item length deliberately. Use one short, direct item and one more detailed item when appropriate.
-                - Do not make all technicalContributions the same length.
+                - Avoid generic contribution items.
+                - Vary item length deliberately.
                 - Avoid fake metrics.
-
+                
                 6. Representative code / highlight
                 - Explain the core logic or most portfolio-worthy implementation based on the given analysis.
                 - Keep explanations concise and focused on why the code matters.
                 - codeHighlights should explain why a specific implementation is meaningful, not repeat the project description.
                 - Do not leave codeHighlights empty when recent commit messages, README summary, highlights, or project summary contain implementation clues.
                 - If actual source code snippets are not provided, infer representative implementation points from recent commit messages and repository facts without pretending that source code was inspected.
-                - Good codeHighlights should mention a concrete module, API, data flow, rendering fix, authentication flow, update logic, or analysis pipeline when such evidence exists.
-
+                
                 Highlights
-                - Avoid ending every highlight with "\uD588\uC2B5\uB2C8\uB2E4".
-                - Mix sentence endings naturally, such as noun phrases, "\uAC1C\uC120", "\uC815\uB9AC", "\uBCF4\uAC15", "\uD574\uACB0", and complete sentences.
+                - Avoid ending every highlight with "했습니다".
+                - Mix sentence endings naturally, such as noun phrases, "개선", "정리", "보강", "해결", and complete sentences.
                 - Keep highlights concise and do not make every item the same length.
-
+                
                 7. Project links
                 - If Repo URL is provided, include the raw URL exactly as one projectLinks item.
                 - Do not add labels such as "GitHub:" inside projectLinks values.
                 - Do not fabricate deployment links.
-                - If no link is provided, return an empty projectLinks array. Do not write "\uC785\uB825 \uD544\uC694".
-
+                - If no link is provided, return an empty projectLinks array. Do not write "입력 필요".
+                
                 User name: %s
                 User bio: %s
                 Requested tone: %s
                 User emphasis request: %s
                 Template id: %s
-
+                
                 Repository facts from GitHub analysis:
                 Repo URL: %s
                 Description: %s
@@ -316,7 +327,7 @@ public class GeminiPortfolioService {
                 User GitHub login: %s
                 User-authored commit count: %s
                 User recent commit messages: %s
-
+                
                 Project name: %s
                 Project summary: %s
                 Tech stacks: %s
@@ -561,3 +572,4 @@ public class GeminiPortfolioService {
             List<String> highlights) {
     }
 }
+
