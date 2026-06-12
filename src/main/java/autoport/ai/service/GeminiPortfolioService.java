@@ -389,6 +389,9 @@ public class GeminiPortfolioService {
                 - activitySummary must be one natural Korean sentence, 90 Korean characters or fewer.
                 - activitySummary must not use subjective evaluation words such as "\uD65C\uBC1C\uD55C" or "\uAFB8\uC900\uD55C".
                 - highlights must contain 3-4 short portfolio-worthy points, each 45 Korean characters or fewer.
+                - Write all highlights in a consistent summary style as concise noun phrases.
+                - Do not write highlights as full sentences ending with "\uD588\uC2B5\uB2C8\uB2E4", "\uD569\uB2C8\uB2E4", or "\uC785\uB2C8\uB2E4".
+                - Good highlight examples: "\uC778\uC99D \uD750\uB984 \uAD6C\uD604", "WebView \uC138\uC158 \uBCF5\uC6D0 \uCC98\uB9AC", "API \uC751\uB2F5 \uAD6C\uC870 \uC815\uB9AC".
                 - highlights must not be simple tool lists or obvious tool consequences such as "TypeScript\uB85C \uD0C0\uC785 \uC548\uC815\uC131\uC744 \uD655\uBCF4".
                 - Keep every field readable in a compact card UI.
                 - Prefer plain product/engineering descriptions over exhaustive feature lists.
