@@ -161,6 +161,11 @@ public class GeminiPortfolioService {
                 Do not copy or paraphrase README content directly into description or summary. Rewrite based on what was actually implemented.
                 Do not write vague phrases like "핵심 기능을 구현했습니다" or "주요 기능을 개발했습니다". Name the actual features.
                 Do not state obvious consequences of using a technology, such as "TypeScript로 타입 안정성을 확보". Focus on what was actually built, not what the tool provides by default.
+                When generating portfolio content, emphasize these service values only when supported by repository data:
+                - Automated technical narrative: turn README, commits, and activity data into a coherent story of technical work.
+                - Evidence-based portfolio writing: use commit count, development period, activity summary, README summary, and user-authored commits as supporting evidence.
+                - Curated implementation highlights: select meaningful implementation points from README and commit messages, and explain why they matter.
+                Do not describe these as product features of Autoport unless the portfolio project itself is Autoport.
                 
                 Attribute work to the user only when it is supported by User-authored commit data, User recent commit messages, User emphasis request, or explicit user-provided bio.
                 Repository-wide README, highlights, and recent commit messages describe the project, but they do not prove the user personally implemented every item.
@@ -304,7 +309,9 @@ public class GeminiPortfolioService {
                 
                 5. Technical contribution and problem solving
                 - Turn meaningful changes into a story.
+                - technicalContributions should read like a technical narrative, not a task list.
                 - technicalContributions should describe how the project was implemented or improved.
+                - Connect the problem, implementation choice, and resulting value when the repository data supports it.
                 - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
                 - Analyze User recent commit messages first.
                 - Do not turn repository-wide recent commit messages into the user's personal contribution unless the same work appears in User recent commit messages or user-provided emphasis.
@@ -317,6 +324,8 @@ public class GeminiPortfolioService {
                 - Keep explanations concise and focused on why the code matters.
                 - codeHighlights should explain why a specific implementation is meaningful, not repeat the project description.
                 - codeHighlights should summarize evidence from total commit count, recent commit flow, activity summary, README-based core content, and user-authored commit messages when available.
+                - codeHighlights should curate the most meaningful implementation evidence from README, recent commits, activity summary, and user-authored commits.
+                - codeHighlights should help readers quickly understand what kind of implementation the user handled.
                 - Prefer concrete evidence such as "최근 커밋에서 인증 흐름과 세션 처리 개선이 반복적으로 확인됨" over generic praise.
                 - Do not leave codeHighlights empty when recent commit messages, README summary, highlights, or project summary contain implementation clues.
                 - If actual source code snippets are not provided, infer representative implementation points from recent commit messages and repository facts without pretending that source code was inspected.
