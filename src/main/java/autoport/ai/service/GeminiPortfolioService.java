@@ -200,6 +200,35 @@ public class GeminiPortfolioService {
                 }
                 
                 Portfolio template requirements:
+
+                Portfolio output must be organized around these sections:
+                1. Portfolio title and summary
+                - portfolioTitle is the main portfolio headline.
+                - introduction is the short portfolio introduction.
+                - summary is the one-line summary for portfolio cards and lists.
+
+                2. Project overview
+                - Each project must include project name, development period, role, GitHub/deployment links when provided, and tech stacks.
+                - Use firstCommitAt/latestCommitAt or Development period for the development period.
+                - Role must distinguish solo project, collaborative project, and inferred responsibility when data supports it.
+
+                3. Project description
+                - Explain what was built.
+                - Explain what problem the project addresses when repository data supports it.
+                - Include the main user flow or core feature flow.
+
+                4. Main features
+                - mainFeatures must list the most important user-facing or technical features.
+                - Prefer 2-4 meaningful features over a long exhaustive list.
+
+                5. Technical contributions
+                - technicalContributions must explain architecture, problem solving, performance, UX, maintainability, or implementation decisions.
+                - Use User-authored commits first when describing personal contribution.
+
+                6. Code and commit-based evidence
+                - codeHighlights should include evidence from commit count, recent commit flow, activity summary, and README-based core content.
+                - Do not fabricate code details.
+                - If source snippets are not provided, describe commit/README-based evidence instead of pretending to inspect code.
                 
                 1. One-line title
                 - Write one natural Korean sentence, not a label or fragment.
@@ -284,9 +313,11 @@ public class GeminiPortfolioService {
                 - Avoid fake metrics.
                 
                 6. Representative code / highlight
-                - Explain the core logic or most portfolio-worthy implementation based on the given analysis.
+                - Explain the core logic, commit-based evidence, or most portfolio-worthy implementation based on the given analysis.
                 - Keep explanations concise and focused on why the code matters.
                 - codeHighlights should explain why a specific implementation is meaningful, not repeat the project description.
+                - codeHighlights should summarize evidence from total commit count, recent commit flow, activity summary, README-based core content, and user-authored commit messages when available.
+                - Prefer concrete evidence such as "최근 커밋에서 인증 흐름과 세션 처리 개선이 반복적으로 확인됨" over generic praise.
                 - Do not leave codeHighlights empty when recent commit messages, README summary, highlights, or project summary contain implementation clues.
                 - If actual source code snippets are not provided, infer representative implementation points from recent commit messages and repository facts without pretending that source code was inspected.
                 
