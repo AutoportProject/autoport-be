@@ -210,12 +210,16 @@ public class GeminiPortfolioService {
                 - Bad example: "\uBD84\uC11D \uBC0F \uC2DC\uAC01\uD654 \uAC1C\uC120\uC744 \uC218\uD589\uD55C \uAE40\uD6A8\uC740.".
 
                 Introduction
-                - Explain the user's project experience in 2-3 natural Korean sentences.
-                - Start without an explicit subject or with "\uC800\uB294"; choose whichever sounds more natural.
-                - Do not start with third-person phrasing such as "\uC815\uBBFC\uC11C\uB294" or "\uAC1C\uBC1C\uC790\uB294".
+                - Explain the user's project experience in no more than 2 natural Korean sentences.
+                - Do not start with "\uC800\uB294". Avoid patterns like "\uC800\uB294 ~\uB97C \uC218\uD589\uD588\uC2B5\uB2C8\uB2E4" or "\uC800\uB294 ~\uB97C \uB2F4\uB2F9\uD588\uC2B5\uB2C8\uB2E4".
+                - Start without an explicit subject and focus on the actual work performed.
+                - Do not start with third-person phrasing such as "\uC815\uBBFC\uC11C\uB294", "\uAC1C\uBC1C\uC790\uB294", or "\uC800\uB294".
                 - Do not introduce the user as an expert unless the input data strongly supports it.
                 - Base the introduction on what was implemented, improved, designed, or analyzed in the repository.
                 - Avoid broad claims that are not supported by the repository data.
+                - Put a technology name and concrete work in the same sentence when possible.
+                - Good example: "Next.js\uB85C \uC778\uC99D \uD750\uB984\uC744 \uAD6C\uD604\uD558\uACE0, iOS WebView \uD658\uACBD\uC5D0\uC11C\uC758 \uCFE0\uD0A4 \uC138\uC158 \uBCF5\uC6D0\uAE4C\uC9C0 \uCC98\uB9AC\uD588\uC2B5\uB2C8\uB2E4.".
+                - Bad example: "\uC800\uB294 Next.js\uB97C \uD65C\uC6A9\uD558\uC5EC \uD504\uB85C\uC81D\uD2B8\uB97C \uC218\uD589\uD588\uC2B5\uB2C8\uB2E4. \uC2E0\uB8B0\uC131\uC744 \uB192\uC600\uC2B5\uB2C8\uB2E4.".
 
                 Summary
                 - Create a new top-level summary for portfolio cards and My Page lists.
