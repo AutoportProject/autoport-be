@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "portfolios")
@@ -52,6 +53,12 @@ public class Portfolio {
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic;
 
+    @Column(name = "share_token", unique = true, length = 36)
+    private String shareToken;
+
+    @Column(name = "shared_at")
+    private LocalDateTime sharedAt;
+
     @Column(name = "featured_project_id")
     private Long featuredProjectId;
 
@@ -86,6 +93,9 @@ public class Portfolio {
         portfolio.projectLinksJson = projectLinksJson;
         portfolio.generatedAt = generatedAt;
         portfolio.isPublic = isPublic != null && isPublic;
+        if (portfolio.isPublic) {
+            portfolio.ensureShareToken();
+        }
         portfolio.featuredProjectId = featuredProjectId;
         portfolio.createdAt = LocalDateTime.now();
         portfolio.updatedAt = LocalDateTime.now();
@@ -114,7 +124,24 @@ public class Portfolio {
         this.projectLinksJson = projectLinksJson;
         this.generatedAt = generatedAt;
         this.isPublic = isPublic != null && isPublic;
+        if (this.isPublic) {
+            ensureShareToken();
+        } else {
+            clearShareToken();
+        }
         this.featuredProjectId = featuredProjectId;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void ensureShareToken() {
+        if (this.shareToken == null || this.shareToken.isBlank()) {
+            this.shareToken = UUID.randomUUID().toString();
+            this.sharedAt = LocalDateTime.now();
+        }
+    }
+
+    public void clearShareToken() {
+        this.shareToken = null;
+        this.sharedAt = null;
     }
 }

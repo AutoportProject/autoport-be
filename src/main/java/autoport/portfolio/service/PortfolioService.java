@@ -187,8 +187,48 @@ public class PortfolioService {
 
         checkOwner(portfolio, userId);
 
+        return toDetailResponse(portfolio);
+    }
+
+    @Transactional
+    public PortfolioShareResponse createShareLink(Long portfolioId, String shareUrlPrefix) {
+        Long userId = getCurrentUserId();
+
+        Portfolio portfolio = portfolioRepository.findById(portfolioId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "PORTFOLIO_005", "Portfolio not found"));
+
+        checkOwner(portfolio, userId);
+
+        if (!Boolean.TRUE.equals(portfolio.getIsPublic())) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "PORTFOLIO_006",
+                    "Private portfolio cannot be shared");
+        }
+
+        portfolio.ensureShareToken();
+
+        return new PortfolioShareResponse(
+                portfolio.getId(),
+                portfolio.getIsPublic(),
+                portfolio.getShareToken(),
+                shareUrlPrefix + "/" + portfolio.getShareToken());
+    }
+
+    public PortfolioDetailResponse getSharedPortfolio(String shareToken) {
+        Portfolio portfolio = portfolioRepository.findByShareToken(shareToken)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "PORTFOLIO_005", "Portfolio not found"));
+
+        if (!Boolean.TRUE.equals(portfolio.getIsPublic())) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "PORTFOLIO_005", "Portfolio not found");
+        }
+
+        return toDetailResponse(portfolio);
+    }
+
+    private PortfolioDetailResponse toDetailResponse(Portfolio portfolio) {
         List<PortfolioProjectRequest> projects = portfolioProjectRepository
-                .findByPortfolioIdOrderByDisplayOrderAsc(portfolioId)
+                .findByPortfolioIdOrderByDisplayOrderAsc(portfolio.getId())
                 .stream()
                 .map(this::toProjectRequest)
                 .toList();
