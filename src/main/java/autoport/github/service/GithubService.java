@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -848,9 +849,11 @@ public class GithubService {
     }
 
     private String buildAiSummary(String repoName, String description, String readmeSummary, String activitySummary) {
-        return repoName + " \uC800\uC7A5\uC18C \uBD84\uC11D \uACB0\uACFC. "
-                + (hasText(description) ? description + " " : "")
-                + readmeSummary + " " + activitySummary;
+        return Stream.of(description, readmeSummary, activitySummary)
+                .filter(this::hasText)
+                .map(String::trim)
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(" "));
     }
 
     private boolean hasText(String value) {
