@@ -115,7 +115,7 @@ public class GeminiPortfolioService {
                     generated.getIntroduction(),
                     generated.getSummary(),
                     generated.getDescription(),
-                    generated.getProjects(),
+                    clearProjectHighlights(generated.getProjects()),
                     generated.getTechnicalContributions(),
                     generated.getCodeHighlights(),
                     generated.getProjectLinks(),
@@ -135,6 +135,24 @@ public class GeminiPortfolioService {
                     "AI_001",
                     "Failed to generate portfolio: " + e.getClass().getSimpleName() + " " + abbreviate(e.getMessage()));
         }
+    }
+
+    private List<PortfolioProjectResponse> clearProjectHighlights(List<PortfolioProjectResponse> projects) {
+        if (projects == null || projects.isEmpty()) {
+            return List.of();
+        }
+
+        return projects.stream()
+                .map(project -> new PortfolioProjectResponse(
+                        project.getName(),
+                        project.getOneLineDescription(),
+                        project.getDescription(),
+                        project.getEstimatedPeriod(),
+                        project.getRole(),
+                        project.getTechStacks(),
+                        project.getMainFeatures(),
+                        List.of()))
+                .toList();
     }
 
     private String buildPrompt(PortfolioGenerateRequest request) {
@@ -157,14 +175,14 @@ public class GeminiPortfolioService {
                 Do not end project descriptions with "를 목표로 합니다", "에 중점을 두었습니다", or "역량을 보여줍니다".
                 Do not use the pattern "~을 통해 ~를 제공합니다".
                 Do not force every array to have the same number of items. Omit weak or repetitive items.
-                If User emphasis request is provided, place that topic first in technicalContributions or highlights.
+                If User emphasis request is provided, place that topic first in technicalContributions.
                 Do not copy or paraphrase README content directly into description or summary. Rewrite based on what was actually implemented.
                 Do not write vague phrases like "핵심 기능을 구현했습니다" or "주요 기능을 개발했습니다". Name the actual features.
                 Do not state obvious consequences of using a technology, such as "TypeScript로 타입 안정성을 확보". Focus on what was actually built, not what the tool provides by default.
                 When generating portfolio content, emphasize these service values only when supported by repository data:
                 - Automated technical narrative: turn README, commits, and activity data into a coherent story of technical work.
                 - Evidence-based portfolio writing: use commit count, development period, activity summary, README summary, and user-authored commits as supporting evidence.
-                - Curated implementation highlights: select meaningful implementation points from README and commit messages, and explain why they matter.
+                - Curated implementation evidence: place meaningful implementation decisions from README and commit messages in technicalContributions, and reserve codeHighlights for quantitative evidence.
                 Do not describe these as product features of Autoport unless the portfolio project itself is Autoport.
                 
                 Attribute work to the user only when it is supported by User-authored commit data, User recent commit messages, User emphasis request, or explicit user-provided bio.
@@ -173,11 +191,12 @@ public class GeminiPortfolioService {
                 
                 Keep field responsibilities separate:
                 description explains what the project is.
-                mainFeatures explains what it does for users.
-                technicalContributions explains how it was implemented.
-                codeHighlights explains why a specific implementation matters.
+                mainFeatures explains only what users can do. It must not include implementation methods, technology names, or architecture details.
+                technicalContributions explains how it was implemented and what technical decisions were made. It must not repeat mainFeatures or codeHighlights.
+                codeHighlights contains only quantitative evidence such as commit counts, PR flow, and activity metrics. It must not repeat technicalContributions.
+                projects[].highlights must always be []. Move any meaningful highlight content to technicalContributions.
                 
-                If Importance score is 5 or lower, keep the output brief and focus mainly on highlights.
+                If Importance score is 5 or lower, keep the output brief and include only strongly supported technicalContributions and codeHighlights.
                 Write the introduction without a subject. Avoid third-person expressions like "정민서는", "개발자는", or "정민서 개발자는".
                 Avoid user-facing guide phrases such as "확인할 수 있습니다", "입력 필요", "정보가 필요합니다", or "제공합니다".
                 
@@ -196,7 +215,7 @@ public class GeminiPortfolioService {
                       "role": "string",
                       "techStacks": ["string"],
                       "mainFeatures": ["string"],
-                      "highlights": ["string"]
+                      "highlights": []
                     }
                   ],
                   "technicalContributions": ["string"],
@@ -221,19 +240,27 @@ public class GeminiPortfolioService {
                 - Explain what was built.
                 - Explain what problem the project addresses when repository data supports it.
                 - Include the main user flow or core feature flow.
+                - description must not repeat introduction.
+                - Compress the representative project or core implementation area into one concise sentence.
+                - Do not use unsupported result claims such as "사용자 편의를 향상했습니다" or "전체 흐름을 다루었습니다".
 
                 4. Main features
-                - mainFeatures must list the most important user-facing or technical features.
+                - mainFeatures must describe only what users can do.
+                - Do not include implementation methods, technology names, libraries, frameworks, or architecture details.
                 - Prefer 2-4 meaningful features over a long exhaustive list.
 
                 5. Technical contributions
                 - technicalContributions must explain architecture, problem solving, performance, UX, maintainability, or implementation decisions.
                 - Use User-authored commits first when describing personal contribution.
+                - Each item must cover a different implementation aspect. Do not repeat the same feature using different wording.
+                - Omit items that are only as specific as "~기능을 구현했습니다". Include an item only when a concrete technical decision or problem-solving detail is supported.
+                - End every item as a concise Korean noun phrase, such as "인증 토큰 갱신 흐름 설계" or "예외 응답 구조 통합".
+                - Do not repeat content already present in mainFeatures or codeHighlights.
 
                 6. Code and commit-based evidence
-                - codeHighlights should include evidence from commit count, recent commit flow, activity summary, and README-based core content.
-                - Do not fabricate code details.
-                - If source snippets are not provided, describe commit/README-based evidence instead of pretending to inspect code.
+                - codeHighlights must contain only quantitative evidence from commit count, PR flow, and activity metrics.
+                - Do not include implementation explanations, technology descriptions, or content already present in technicalContributions.
+                - If quantitative evidence is unavailable, return an empty codeHighlights array.
                 
                 1. One-line title
                 - Write one natural Korean sentence, not a label or fragment.
@@ -276,10 +303,12 @@ public class GeminiPortfolioService {
                 Description
                 - Create a new top-level description for portfolio detail previews.
                 - Do not copy introduction exactly.
+                - Do not repeat the same content or sentence structure used in introduction.
                 - Do not copy or paraphrase README content directly. Rewrite based on what was actually implemented.
-                - Write 1-2 Korean sentences that explain the overall portfolio theme, representative project, and practical value.
+                - Write one concise Korean sentence that compresses the representative project or core implementation area.
                 - Keep it shorter and more scannable than introduction.
                 - Do not write vague phrases like "핵심 기능을 구현했습니다". Name the actual features.
+                - Do not use unsupported result claims such as "사용자 편의를 향상했습니다" or "전체 흐름을 다루었습니다".
                 
                 2. Project detail
                 - Include project name, one-line summary, development period, and the user's role.
@@ -302,8 +331,9 @@ public class GeminiPortfolioService {
                 - Do not add unrelated technologies.
                 
                 4. Main features
-                - Summarize likely user-facing or technical features from the summary, README, and highlights.
-                - mainFeatures should describe what the project does from a user or service perspective, not implementation details.
+                - Summarize only user-facing capabilities from the summary and README.
+                - mainFeatures should describe what users can do, not how the project was implemented.
+                - Do not include technology names, libraries, frameworks, architecture, data models, or implementation details.
                 - Order mainFeatures by importance.
                 - Omit less important features instead of filling the list evenly.
                 
@@ -315,25 +345,22 @@ public class GeminiPortfolioService {
                 - Focus on architecture, authentication, API design, deployment, data modeling, reliability, maintainability, or automation when relevant.
                 - Analyze User recent commit messages first.
                 - Do not turn repository-wide recent commit messages into the user's personal contribution unless the same work appears in User recent commit messages or user-provided emphasis.
-                - Avoid generic contribution items.
-                - Vary item length deliberately.
+                - Each item must cover a different implementation aspect. Do not repeat the same feature in different wording.
+                - Omit generic items at the level of "~기능을 구현했습니다" unless a concrete technical decision or problem-solving detail is provided.
+                - Do not repeat information already used in mainFeatures or codeHighlights.
+                - End every technicalContributions item as a concise Korean noun phrase, not a full sentence ending in "했습니다".
                 - Avoid fake metrics.
                 
                 6. Representative code / highlight
-                - Explain the core logic, commit-based evidence, or most portfolio-worthy implementation based on the given analysis.
-                - Keep explanations concise and focused on why the code matters.
-                - codeHighlights should explain why a specific implementation is meaningful, not repeat the project description.
-                - codeHighlights should summarize evidence from total commit count, recent commit flow, activity summary, README-based core content, and user-authored commit messages when available.
-                - codeHighlights should curate the most meaningful implementation evidence from README, recent commits, activity summary, and user-authored commits.
-                - codeHighlights should help readers quickly understand what kind of implementation the user handled.
-                - Prefer concrete evidence such as "최근 커밋에서 인증 흐름과 세션 처리 개선이 반복적으로 확인됨" over generic praise.
-                - Do not leave codeHighlights empty when recent commit messages, README summary, highlights, or project summary contain implementation clues.
-                - If actual source code snippets are not provided, infer representative implementation points from recent commit messages and repository facts without pretending that source code was inspected.
+                - codeHighlights must contain only quantitative repository evidence.
+                - Use commit count, user-authored commit count, PR flow, and activity metrics only when they are provided.
+                - Do not include technical implementation explanations or restate technicalContributions.
+                - Do not invent PR counts, review counts, percentages, or activity metrics.
+                - Return [] when no meaningful quantitative evidence is available.
                 
                 Highlights
-                - Avoid ending every highlight with "했습니다".
-                - Mix sentence endings naturally, such as noun phrases, "개선", "정리", "보강", "해결", and complete sentences.
-                - Keep highlights concise and do not make every item the same length.
+                - projects[].highlights must always be [].
+                - Move meaningful implementation content that would otherwise appear in highlights to technicalContributions.
                 
                 7. Project links
                 - If Repo URL is provided, include the raw URL exactly as one projectLinks item.
