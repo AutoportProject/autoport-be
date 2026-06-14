@@ -155,12 +155,22 @@ BEGIN
         FOREIGN KEY (template_id) REFERENCES portfolio_templates(id);
     END IF;
 
+    UPDATE portfolios
+    SET featured_project_id = NULL
+    WHERE featured_project_id IS NOT NULL
+      AND NOT EXISTS (
+          SELECT 1
+          FROM portfolio_projects
+          WHERE portfolio_projects.id = portfolios.featured_project_id
+      );
+
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'fk_portfolios_featured_project'
     ) THEN
         ALTER TABLE portfolios
         ADD CONSTRAINT fk_portfolios_featured_project
-        FOREIGN KEY (featured_project_id) REFERENCES portfolio_projects(id);
+        FOREIGN KEY (featured_project_id) REFERENCES portfolio_projects(id)
+        ON DELETE SET NULL;
     END IF;
 END $$;
 
