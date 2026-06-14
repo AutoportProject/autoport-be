@@ -10,6 +10,7 @@ GitHub 저장소를 분석하고, AI를 활용해 개발자 포트폴리오 초�
 - GitHub 저장소 README, 언어, 커밋, 활동 정보 분석
 - Gemini API 기반 포트폴리오 콘텐츠 생성
 - 포트폴리오 저장, 수정, 삭제, 목록/상세 조회
+- 공개 포트폴리오 공유 링크 생성 및 토큰 기반 조회
 - Swagger UI 기반 API 문서 제공
 
 ## 기술 스택
@@ -249,6 +250,8 @@ Authorization: Bearer <accessToken>
 | GET | `/api/portfolio/{portfolioId}` | 포트폴리오 상세 조회 | 필요 |
 | PUT | `/api/portfolio/{portfolioId}` | 포트폴리오 수정 | 필요 |
 | DELETE | `/api/portfolio/{portfolioId}` | 포트폴리오 삭제 | 필요 |
+| POST | `/api/portfolio/{portfolioId}/share` | 공개 포트폴리오 공유 링크 생성 | 필요 |
+| GET | `/api/portfolio/share/{shareToken}` | 공유 토큰으로 공개 포트폴리오 조회 | 불필요 |
 
 포트폴리오 생성 요청 예시:
 
@@ -294,6 +297,17 @@ Authorization: Bearer <accessToken>
 }
 ```
 
+공유 링크 생성 응답 예시:
+
+```json
+{
+  "portfolioId": 1,
+  "isPublic": true,
+  "shareToken": "550e8400-e29b-41d4-a716-446655440000",
+  "shareUrl": "http://localhost:8080/api/portfolio/share/550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
 ## 응답 형식
 
 성공 응답은 공통 래퍼 형태로 반환됩니다.
@@ -322,6 +336,57 @@ Authorization: Bearer <accessToken>
 - Dockerfile은 Gradle 빌드 스테이지에서 테스트를 제외하고 JAR를 생성합니다.
 
 ## 담당 역할
+
+### 박지선 | Backend · API · Documentation
+
+인증, GitHub 연동, 포트폴리오 저장/공유, 배포 설정과 백엔드 문서화를 담당했습니다.
+
+#### 인증 및 사용자 기능
+
+- JWT 인증 구조와 Spring Security 인증 흐름 구현
+- 로컬 회원가입/로그인 API와 사용자 인증 흐름 정리
+- 이메일 인증 발송 기능 구현 및 Resend 연동
+- 메일 발송 실패 처리, 진단 로그, Mapper 초기화 문제 개선
+- GitHub OAuth 로그인 구현 및 기존 이메일 계정과 GitHub 계정 연결
+- GitHub 신규 가입 완료 endpoint와 alias API 추가
+
+#### GitHub 저장소 연동
+
+- 실제 GitHub API 기반 저장소 목록 및 저장소 분석 기능 구현
+- GitHub 저장소 private 필드 응답 정렬
+- GitHub 커밋 수 조회 fallback 로직 개선
+- 공동 작업 저장소와 프론트엔드 연동을 고려한 응답 구조 조정
+
+#### 포트폴리오 저장 및 공유
+
+- AI 생성 포트폴리오 상세 데이터 저장 구조 구현
+- 포트폴리오 요약, 배포 URL, 강조 항목, 템플릿 선택 옵션 확장
+- 포트폴리오 템플릿 선택값을 optional로 처리
+- 대표 프로젝트(`featuredProjectId`) 저장, 수정, 목록/상세 조회 응답 연동
+- 포트폴리오 저장 후 생성된 프로젝트 ID를 기준으로 대표 프로젝트 참조 보정
+- 공개 포트폴리오 공유 토큰 생성 및 인증 없는 공유 조회 API 구현
+- 비공개 포트폴리오 공유 차단 및 공개 상태 검증
+- 포트폴리오 삭제 시 하위 프로젝트 cascade delete와 대표 프로젝트 참조 정합성 유지
+
+#### 설정 및 배포
+
+- PostgreSQL 스키마와 헬스체크 설정
+- 로컬 환경변수 예시와 실행 설정 추가
+- Render 배포 환경을 위한 서버 설정, CORS origin, DB URL 필수화 적용
+- Docker 빌드 호환을 위한 JJWT 버전 문제 수정
+- Swagger JWT Authorization 설정
+
+#### README 및 API 명세서 작성
+
+- `sunnyanginhell` GitHub 계정으로 프로젝트 README 최초 작성
+- 프로젝트 개요, 주요 기능, 기술 스택, 패키지 구조 정리
+- 로컬 실행을 위한 요구사항, 환경변수, 데이터베이스 준비, 빌드 및 Docker 실행 방법 문서화
+- 배포 환경에서 관리해야 하는 DB, OAuth, JWT, Gemini, Resend 환경변수 항목 정리
+- Swagger UI 및 OpenAPI JSON 접근 경로 문서화
+- JWT Bearer 인증 방식과 인증 예외 경로 정리
+- Health, Auth, Users, GitHub, Portfolio 주요 API 엔드포인트 명세 작성
+- 회원가입, 로그인, GitHub 저장소 분석, 포트폴리오 생성/저장 요청 예시 JSON 작성
+- 공통 성공 응답과 오류 응답 형식 정리
 
 ### 김효은 | Backend · AI
 
