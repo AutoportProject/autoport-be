@@ -80,6 +80,8 @@ CREATE TABLE IF NOT EXISTS portfolio_projects (
 );
 
 DO $$
+DECLARE
+    portfolio_project_fk_name TEXT;
 BEGIN
     ALTER TABLE portfolios
     ALTER COLUMN template_id DROP NOT NULL;
@@ -117,6 +119,25 @@ BEGIN
     ALTER TABLE portfolio_projects
     ADD COLUMN IF NOT EXISTS main_features_json TEXT;
 
+    FOR portfolio_project_fk_name IN
+        SELECT constraint_name
+        FROM information_schema.key_column_usage
+        WHERE table_schema = current_schema()
+          AND table_name = 'portfolio_projects'
+          AND column_name = 'portfolio_id'
+          AND position_in_unique_constraint IS NOT NULL
+    LOOP
+        EXECUTE format(
+            'ALTER TABLE portfolio_projects DROP CONSTRAINT IF EXISTS %I',
+            portfolio_project_fk_name
+        );
+    END LOOP;
+
+    ALTER TABLE portfolio_projects
+    ADD CONSTRAINT fk_portfolio_projects_portfolio
+    FOREIGN KEY (portfolio_id) REFERENCES portfolios(id)
+    ON DELETE CASCADE;
+
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'fk_portfolios_user'
     ) THEN
@@ -132,15 +153,6 @@ BEGIN
         ALTER TABLE portfolios
         ADD CONSTRAINT fk_portfolios_template
         FOREIGN KEY (template_id) REFERENCES portfolio_templates(id);
-    END IF;
-
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_portfolio_projects_portfolio'
-    ) THEN
-        ALTER TABLE portfolio_projects
-        ADD CONSTRAINT fk_portfolio_projects_portfolio
-        FOREIGN KEY (portfolio_id) REFERENCES portfolios(id)
-        ON DELETE CASCADE;
     END IF;
 
     IF NOT EXISTS (
