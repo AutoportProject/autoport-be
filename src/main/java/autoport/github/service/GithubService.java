@@ -115,6 +115,11 @@ public class GithubService {
                 owner,
                 repoName,
                 user.getGithubLogin());
+        int prReviewCount = fetchPrReviewCount(
+                user.getGithubAccessToken(),
+                owner,
+                repoName,
+                user.getGithubLogin());
         int importanceScore = calculateImportanceScore(starCount, forkCount, commitCount, languages.size(), hasText(readme));
 
         List<String> defaultHighlights = buildHighlights(repo, languages, commitCount, readme);
@@ -145,7 +150,8 @@ public class GithubService {
                 commitActivity.recentMessages(),
                 user.getGithubLogin(),
                 userCommitActivity.commitCount(),
-                userCommitActivity.recentMessages());
+                userCommitActivity.recentMessages(),
+                prReviewCount);
 
         GeminiPortfolioService.RepositoryAnalysisSummary aiSummary =
                 geminiPortfolioService.summarizeRepository(rawAiInputData);
@@ -183,7 +189,8 @@ public class GithubService {
                 commitActivity.recentMessages(),
                 user.getGithubLogin(),
                 userCommitActivity.commitCount(),
-                userCommitActivity.recentMessages());
+                userCommitActivity.recentMessages(),
+                prReviewCount);
 
         return new GithubAnalyzeResponse(
                 repoId,
@@ -195,6 +202,7 @@ public class GithubService {
                 activitySummary,
                 starCount,
                 commitCount,
+                prReviewCount,
                 importanceScore,
                 aiInputData,
                 java.time.Instant.now().toString());
@@ -392,6 +400,85 @@ public class GithubService {
             throw githubApiException(e, "Repository not found or access denied");
         } catch (Exception e) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "GITHUB_005", "Failed to call GitHub API");
+        }
+    }
+
+    private int fetchPrReviewCount(
+            String accessToken,
+            String owner,
+            String repoName,
+            String githubLogin) {
+        if (!hasText(githubLogin)) {
+            return 0;
+        }
+
+        try {
+            String body = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/search/issues")
+                            .queryParam("q", "repo:" + owner + "/" + repoName
+                                    + " is:pr reviewed-by:" + githubLogin)
+                            .queryParam("per_page", 100)
+                            .build())
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(String.class);
+
+            int reviewCount = 0;
+            JsonNode pullRequests = objectMapper.readTree(body).path("items");
+            if (!pullRequests.isArray()) {
+                return 0;
+            }
+
+            for (JsonNode pullRequest : pullRequests) {
+                int pullNumber = pullRequest.path("number").asInt(0);
+                if (pullNumber > 0) {
+                    reviewCount += fetchUserReviewCount(
+                            accessToken,
+                            owner,
+                            repoName,
+                            pullNumber,
+                            githubLogin);
+                }
+            }
+            return reviewCount;
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    private int fetchUserReviewCount(
+            String accessToken,
+            String owner,
+            String repoName,
+            int pullNumber,
+            String githubLogin) {
+        try {
+            String body = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/repos/{owner}/{repo}/pulls/{pullNumber}/reviews")
+                            .queryParam("per_page", 100)
+                            .build(owner, repoName, pullNumber))
+                    .headers(headers -> headers.setBearerAuth(accessToken))
+                    .retrieve()
+                    .body(String.class);
+
+            JsonNode reviews = objectMapper.readTree(body);
+            if (!reviews.isArray()) {
+                return 0;
+            }
+
+            int count = 0;
+            for (JsonNode review : reviews) {
+                String reviewer = review.path("user").path("login").asText("");
+                String state = review.path("state").asText("");
+                if (githubLogin.equalsIgnoreCase(reviewer) && !"PENDING".equalsIgnoreCase(state)) {
+                    count++;
+                }
+            }
+            return count;
+        } catch (Exception ignored) {
+            return 0;
         }
     }
 

@@ -33,4 +33,5 @@ public class AiInputData {
     private String contributorLogin;
     private Integer userCommitCount;
     private List<String> userRecentCommitMessages;
+    private Integer prReviewCount;
 }

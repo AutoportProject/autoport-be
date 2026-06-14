@@ -394,6 +394,7 @@ public class GeminiPortfolioService {
                 User GitHub login: %s
                 User-authored commit count: %s
                 User recent commit messages: %s
+                PR review count: %s
                 
                 Project name: %s
                 Project summary: %s
@@ -424,6 +425,7 @@ public class GeminiPortfolioService {
                 blankToEmpty(analysis.getContributorLogin()),
                 numberToText(analysis.getUserCommitCount()),
                 listToText(analysis.getUserRecentCommitMessages()),
+                numberToText(analysis.getPrReviewCount()),
                 blankToEmpty(analysis.getProjectName()),
                 firstNonBlank(analysis.getSummary(), analysis.getReadmeSummary(), analysis.getDescription()),
                 listToText(analysis.getStacks()),
@@ -480,6 +482,7 @@ public class GeminiPortfolioService {
                 Forks: %s
                 Open issues: %s
                 Commit count: %s
+                PR review count: %s
                 Importance score: %s
                 Repository created at: %s
                 Repository updated at: %s
@@ -500,6 +503,7 @@ public class GeminiPortfolioService {
                 numberToText(analysis.getForkCount()),
                 numberToText(analysis.getOpenIssuesCount()),
                 numberToText(analysis.getCommitCount()),
+                numberToText(analysis.getPrReviewCount()),
                 numberToText(analysis.getImportanceScore()),
                 blankToEmpty(analysis.getRepositoryCreatedAt()),
                 blankToEmpty(analysis.getRepositoryUpdatedAt()),

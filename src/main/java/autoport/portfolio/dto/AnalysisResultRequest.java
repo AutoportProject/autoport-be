@@ -41,4 +41,5 @@ public class AnalysisResultRequest {
     private String contributorLogin;
     private Integer userCommitCount;
     private List<String> userRecentCommitMessages;
+    private Integer prReviewCount;
 }

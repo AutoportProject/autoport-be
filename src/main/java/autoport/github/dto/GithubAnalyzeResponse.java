@@ -17,6 +17,7 @@ public class GithubAnalyzeResponse {
     private String activitySummary;
     private Integer starCount;
     private Integer commitCount;
+    private Integer prReviewCount;
     private Integer importanceScore;
     private AiInputData aiInputData;
     private String analyzedAt;
