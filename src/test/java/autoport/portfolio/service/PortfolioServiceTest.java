@@ -4,9 +4,12 @@ import autoport.ai.service.GeminiPortfolioService;
 import autoport.common.exception.ApiException;
 import autoport.config.UserPrincipal;
 import autoport.portfolio.dto.PortfolioDetailResponse;
+import autoport.portfolio.dto.PortfolioProjectRequest;
+import autoport.portfolio.dto.PortfolioSaveResponse;
 import autoport.portfolio.dto.PortfolioSaveRequest;
 import autoport.portfolio.dto.PortfolioShareResponse;
 import autoport.portfolio.entity.Portfolio;
+import autoport.portfolio.entity.PortfolioProject;
 import autoport.portfolio.repository.PortfolioProjectRepository;
 import autoport.portfolio.repository.PortfolioRepository;
 import autoport.portfolio.repository.PortfolioTemplateRepository;
@@ -28,6 +31,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -157,6 +161,30 @@ class PortfolioServiceTest {
         assertThat(portfolio.getSharedAt()).isNull();
     }
 
+    @Test
+    void savePortfolioMapsFeaturedProjectRepoIdToSavedProjectId() {
+        PortfolioSaveRequest request = createSaveRequestWithProject(1231214650L);
+        Portfolio[] savedPortfolioHolder = new Portfolio[1];
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(portfolioRepository.save(any(Portfolio.class))).thenAnswer(invocation -> {
+            Portfolio portfolio = invocation.getArgument(0);
+            ReflectionTestUtils.setField(portfolio, "id", 1L);
+            savedPortfolioHolder[0] = portfolio;
+            return portfolio;
+        });
+        when(portfolioProjectRepository.save(any(PortfolioProject.class))).thenAnswer(invocation -> {
+            PortfolioProject project = invocation.getArgument(0);
+            ReflectionTestUtils.setField(project, "id", 2L);
+            return project;
+        });
+
+        PortfolioSaveResponse response = portfolioService.savePortfolio(request);
+
+        assertThat(response.getPortfolioId()).isEqualTo(1L);
+        assertThat(savedPortfolioHolder[0].getFeaturedProjectId()).isEqualTo(2L);
+    }
+
     private Portfolio createPortfolio(boolean isPublic) {
         Portfolio portfolio = Portfolio.create(
                 user,
@@ -173,5 +201,23 @@ class PortfolioServiceTest {
                 null);
         ReflectionTestUtils.setField(portfolio, "id", 1L);
         return portfolio;
+    }
+
+    private PortfolioSaveRequest createSaveRequestWithProject(Long featuredProjectId) {
+        PortfolioProjectRequest project = new PortfolioProjectRequest();
+        ReflectionTestUtils.setField(project, "repoId", featuredProjectId);
+        ReflectionTestUtils.setField(project, "name", "project");
+        ReflectionTestUtils.setField(project, "description", "description");
+
+        PortfolioSaveRequest request = new PortfolioSaveRequest();
+        ReflectionTestUtils.setField(request, "title", "title");
+        ReflectionTestUtils.setField(request, "bio", "bio");
+        ReflectionTestUtils.setField(request, "technicalContributions", List.of());
+        ReflectionTestUtils.setField(request, "codeHighlights", List.of());
+        ReflectionTestUtils.setField(request, "projectLinks", List.of());
+        ReflectionTestUtils.setField(request, "projects", List.of(project));
+        ReflectionTestUtils.setField(request, "isPublic", false);
+        ReflectionTestUtils.setField(request, "featuredProjectId", featuredProjectId);
+        return request;
     }
 }

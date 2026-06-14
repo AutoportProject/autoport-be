@@ -74,11 +74,12 @@ public class PortfolioService {
                 writeJson(request.getProjectLinks()),
                 request.getGeneratedAt(),
                 request.getIsPublic(),
-                request.getFeaturedProjectId());
+                null);
 
         Portfolio savedPortfolio = portfolioRepository.save(portfolio);
 
-        saveProjects(savedPortfolio, request.getProjects());
+        List<PortfolioProject> savedProjects = saveProjects(savedPortfolio, request.getProjects());
+        savedPortfolio.updateFeaturedProjectId(resolveFeaturedProjectId(request.getFeaturedProjectId(), savedProjects));
 
         return new PortfolioSaveResponse(
                 savedPortfolio.getId(),
@@ -113,10 +114,11 @@ public class PortfolioService {
                 writeJson(request.getProjectLinks()),
                 request.getGeneratedAt(),
                 request.getIsPublic(),
-                request.getFeaturedProjectId());
+                null);
 
         portfolioProjectRepository.deleteByPortfolioId(portfolioId);
-        saveProjects(portfolio, request.getProjects());
+        List<PortfolioProject> savedProjects = saveProjects(portfolio, request.getProjects());
+        portfolio.updateFeaturedProjectId(resolveFeaturedProjectId(request.getFeaturedProjectId(), savedProjects));
 
         return new PortfolioUpdateResponse(
                 portfolio.getId(),
@@ -251,8 +253,8 @@ public class PortfolioService {
                 portfolio.getUpdatedAt().toString());
     }
 
-    private void saveProjects(Portfolio portfolio, List<PortfolioProjectRequest> projects) {
-        for (PortfolioProjectRequest projectRequest : projects) {
+    private List<PortfolioProject> saveProjects(Portfolio portfolio, List<PortfolioProjectRequest> projects) {
+        return projects.stream().map(projectRequest -> {
             PortfolioProject project = PortfolioProject.create(
                     portfolio,
                     projectRequest.getRepoId(),
@@ -268,8 +270,21 @@ public class PortfolioService {
                     writeJson(projectRequest.getMainFeatures()),
                     writeJson(projectRequest.getHighlights()));
 
-            portfolioProjectRepository.save(project);
+            return portfolioProjectRepository.save(project);
+        }).toList();
+    }
+
+    private Long resolveFeaturedProjectId(Long requestedFeaturedProjectId, List<PortfolioProject> savedProjects) {
+        if (requestedFeaturedProjectId == null || savedProjects == null || savedProjects.isEmpty()) {
+            return null;
         }
+
+        return savedProjects.stream()
+                .filter(project -> Objects.equals(project.getId(), requestedFeaturedProjectId)
+                        || Objects.equals(project.getRepoId(), requestedFeaturedProjectId))
+                .map(PortfolioProject::getId)
+                .findFirst()
+                .orElse(null);
     }
 
     private String resolveSummary(PortfolioSaveRequest request) {

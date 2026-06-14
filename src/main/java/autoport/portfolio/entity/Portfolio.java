@@ -144,4 +144,9 @@ public class Portfolio {
         this.shareToken = null;
         this.sharedAt = null;
     }
+
+    public void updateFeaturedProjectId(Long featuredProjectId) {
+        this.featuredProjectId = featuredProjectId;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
